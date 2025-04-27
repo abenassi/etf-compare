@@ -74,13 +74,44 @@ for url in urls_to_remove:
 # Fetch data button
 if st.sidebar.button("Fetch Data"):
     with st.spinner("Fetching data from lazyportfolioetf.com..."):
+        # Create a status container to show real-time progress
+        status_container = st.empty()
+        status_container.info("Starting data scraping process...")
+        
+        # Scrape data from URLs
         df, errors = scrape_multiple_lazyportfolio_30y_metrics(st.session_state.urls)
+        
+        # Display results
         if not df.empty:
             st.session_state.data = df
             st.session_state.errors = errors
-            st.success(f"Successfully fetched data for {len(df)} assets!")
+            
+            # Show success message with details
+            st.success(f"Successfully fetched data for {len(df)} assets! ({len(errors)} errors)")
+            status_container.empty()
+            
+            # Log the column names and shapes for debugging
+            st.session_state.debug_info = {
+                "shape": df.shape,
+                "columns": list(df.columns),
+                "scrape_time": df["scrape_time"].iloc[0] if not df.empty else None
+            }
         else:
-            st.error("Failed to fetch any data. Check the URLs and try again.")
+            # Show detailed error information when no data was fetched
+            st.error("Failed to fetch any data from the provided URLs.")
+            status_container.error("No data could be scraped. Check the error details below.")
+            
+            # Store errors for later display
+            st.session_state.errors = errors
+            
+            # Add debugging information
+            if errors:
+                error_summary = "\n".join([f"• {e['url']}: {e['error']}" for e in errors[:3]])
+                st.error(f"First few errors:\n{error_summary}")
+                if len(errors) > 3:
+                    st.error(f"...and {len(errors) - 3} more errors. See the Errors tab for details.")
+            else:
+                st.error("No specific errors were reported, but no data was fetched. Check URL format and website structure.")
 
 # Filtering Section
 st.sidebar.header("Filters")
@@ -148,7 +179,7 @@ if st.session_state.data is not None and not filtered_df.empty:
     )
     
     # Tabs for different views
-    tab1, tab2, tab3, tab4 = st.tabs(["Data Table", "Returns Comparison", "Risk Analysis", "Asset Comparison"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Data Table", "Returns Comparison", "Risk Analysis", "Asset Comparison", "Debug Info"])
     
     with tab1:
         st.header("Asset Data")
@@ -251,11 +282,54 @@ if st.session_state.data is not None and not filtered_df.empty:
         else:
             st.warning("Please select at least one asset to compare.")
     
-    # Display any scraping errors
-    if st.session_state.errors:
-        st.header("Scraping Errors")
-        for error in st.session_state.errors:
-            st.error(f"Error scraping {error['url']}: {error['error']}")
+    with tab5:
+        st.header("Debug Information")
+        
+        # Show debugging information
+        st.subheader("Dataset Information")
+        if 'debug_info' in st.session_state:
+            debug_info = st.session_state.debug_info
+            cols = st.columns(3)
+            cols[0].metric("Rows", debug_info["shape"][0])
+            cols[1].metric("Columns", debug_info["shape"][1])
+            cols[2].metric("Last Update", debug_info["scrape_time"])
+            
+            st.subheader("Columns")
+            st.write(debug_info["columns"])
+            
+            # Show raw data sample
+            st.subheader("Raw Data Sample")
+            if st.checkbox("Show raw data sample"):
+                st.dataframe(st.session_state.data.head(3), use_container_width=True)
+        else:
+            st.info("No debug information available yet. Run 'Fetch Data' first.")
+        
+        # Display URLs being used
+        st.subheader("Current URLs")
+        for i, url in enumerate(st.session_state.urls):
+            st.code(f"{i+1}. {url}", language=None)
+        
+        # Display any scraping errors
+        st.subheader("Scraping Errors")
+        if st.session_state.errors:
+            for i, error in enumerate(st.session_state.errors):
+                with st.expander(f"Error {i+1}: {error['url'].split('/')[-2]}"):
+                    st.error(f"URL: {error['url']}")
+                    st.error(f"Error: {error['error']}")
+                    
+                    # Provide troubleshooting suggestions based on error
+                    if "Missing metrics" in error['error']:
+                        st.warning("Possible causes:")
+                        st.markdown("- Webpage structure might have changed")
+                        st.markdown("- Content might be loading dynamically with JavaScript")
+                        st.markdown("- Required metrics might use different naming patterns")
+                    elif "Error fetching URL" in error['error']:
+                        st.warning("Network or URL issues:")
+                        st.markdown("- Check if the URL is accessible in a browser")
+                        st.markdown("- The website might be blocking scraping requests")
+                        st.markdown("- Network connection issues")
+        else:
+            st.success("No errors reported during scraping.")
 
 elif st.session_state.data is not None and filtered_df.empty:
     st.warning("No assets match the current filter criteria. Try adjusting the filters.")
@@ -279,6 +353,8 @@ else:
        - Returns Comparison: Charts comparing nominal and real returns
        - Risk Analysis: Visual analysis of risk vs. return
        - Asset Comparison: Side-by-side comparison of selected assets
+       - Debug Info: Detailed information about the data and any scraping errors
+    6. If scraping fails, check the "Debug Info" tab for detailed error messages and troubleshooting tips
     """, unsafe_allow_html=False)
 
 # Footer
