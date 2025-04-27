@@ -29,7 +29,7 @@ st.title("📊 LazyPortfolio ETF Analyzer")
 st.markdown("""
 This dashboard analyzes and compares financial metrics of ETFs and lazy portfolios 
 scraped from [lazyportfolioetf.com](https://www.lazyportfolioetf.com).
-""")
+""", unsafe_allow_html=False)
 
 # Session state initialization
 if 'data' not in st.session_state:
@@ -116,7 +116,7 @@ else:
     filtered_df = None
 
 # Attribution
-st.sidebar.markdown("---")
+st.sidebar.markdown("---", unsafe_allow_html=False)
 st.sidebar.caption("Data Source: [lazyportfolioetf.com](https://www.lazyportfolioetf.com)")
 st.sidebar.caption(f"Last Updated: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
@@ -227,7 +227,7 @@ if st.session_state.data is not None and not filtered_df.empty:
         - **Bubble Size**: Nominal Sharpe Ratio - larger bubbles indicate better risk-adjusted returns
         
         Ideally, you want assets in the upper left (high returns, low risk).
-        """)
+        """, unsafe_allow_html=False)
     
     with tab4:
         st.header("Asset Comparison")
@@ -264,7 +264,8 @@ else:
     
     # Show example of what the dashboard will look like
     st.header("Dashboard Preview")
-    st.image("https://via.placeholder.com/800x400.png?text=ETF+Analyzer+Dashboard+Preview", use_column_width=True)
+    # Create a simple preview instead of loading an external image
+    st.info("👆 Click 'Fetch Data' to see the interactive dashboard with real metrics and visualizations.")
     
     # Instructions
     st.markdown("""
@@ -278,8 +279,8 @@ else:
        - Returns Comparison: Charts comparing nominal and real returns
        - Risk Analysis: Visual analysis of risk vs. return
        - Asset Comparison: Side-by-side comparison of selected assets
-    """)
+    """, unsafe_allow_html=False)
 
 # Footer
-st.markdown("---")
+st.markdown("---", unsafe_allow_html=False)
 st.caption("ETF Analyzer Dashboard | Data sourced from lazyportfolioetf.com")
