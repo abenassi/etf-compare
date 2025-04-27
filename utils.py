@@ -80,10 +80,26 @@ def format_dataframe_for_display(df):
         'std_deviation': 'Std Deviation (%)',
         'nominal_sharpe': 'Nominal Sharpe',
         'real_sharpe': 'Real Sharpe',
-        'scrape_time': 'Last Updated'
+        'scrape_time': 'Last Updated',
+        'is_real_return_estimated': 'Real Return Estimated'
     }
     
-    display_df = display_df.rename(columns=column_mapping)
+    # Apply column renaming for columns that exist
+    valid_columns = {k: v for k, v in column_mapping.items() if k in display_df.columns}
+    display_df = display_df.rename(columns=valid_columns)
+    
+    # Mark estimated real returns (if column exists)
+    if 'is_real_return_estimated' in df.columns:
+        estimated_indices = display_df[display_df['Real Return Estimated'] == True].index
+        if not estimated_indices.empty:
+            # Add a note to the real return values that were estimated
+            for idx in estimated_indices:
+                if '30Y Real Return (%)' in display_df.columns:
+                    current_val = display_df.at[idx, '30Y Real Return (%)']
+                    display_df.at[idx, '30Y Real Return (%)'] = f"{current_val} *"
+        
+        # Remove the is_real_return_estimated column as it's now encoded in the values
+        display_df = display_df.drop(columns=['Real Return Estimated'])
     
     return display_df
 
