@@ -1,0 +1,86 @@
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import re
+
+def scrape_lazyportfolio_30y_metrics(url):
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    retorno_30y_nominal = None
+    retorno_30y_real = None
+    desvio_estandar = None
+    nombre = None
+    
+    # Buscar el título de la página (nombre del asset)
+    title_tag = soup.find('h1')
+    if title_tag:
+        nombre = title_tag.get_text(strip=True)
+    else:
+        nombre = "Nombre no encontrado"
+    
+    text_blocks = soup.find_all('div', class_='et_pb_text_inner')
+    
+    for block in text_blocks:
+        text = block.get_text()
+        
+        match = re.search(r'30Y Return\s*([\d\.]+)%', text)
+        if match and retorno_30y_nominal is None:
+            retorno_30y_nominal = float(match.group(1))
+        
+        match = re.search(r'30Y Inflation Adjusted Return\s*([\d\.]+)%', text)
+        if match and retorno_30y_real is None:
+            retorno_30y_real = float(match.group(1))
+        
+        match = re.search(r'Std Deviation\s*([\d\.]+)%', text)
+        if match and desvio_estandar is None:
+            desvio_estandar = float(match.group(1))
+        
+        if retorno_30y_nominal and retorno_30y_real and desvio_estandar:
+            break
+
+    if None in (retorno_30y_nominal, retorno_30y_real, desvio_estandar):
+        raise ValueError(f"No se pudieron encontrar todos los datos en la página: {url}")
+
+    cociente_nominal = retorno_30y_nominal / desvio_estandar
+    cociente_real = retorno_30y_real / desvio_estandar
+
+    return {
+        'nombre': nombre,
+        'url': url,
+        'retorno_30y_nominal': retorno_30y_nominal,
+        'retorno_30y_real': retorno_30y_real,
+        'desvio_estandar': desvio_estandar,
+        'cociente_nominal': cociente_nominal,
+        'cociente_real': cociente_real
+    }
+
+def scrape_multiple_lazyportfolio_30y_metrics(urls):
+    datos = []
+    for url in urls:
+        try:
+            metricas = scrape_lazyportfolio_30y_metrics(url)
+            datos.append(metricas)
+        except Exception as e:
+            print(f"Error en {url}: {e}")
+    
+    df = pd.DataFrame(datos)
+    return df
+
+# URLs que me pasaste
+urls = [
+    "https://www.lazyportfolioetf.com/etf/spdr-sp-500-spy/",
+    "https://www.lazyportfolioetf.com/allocation/all-country-world-stocks-portfolio/",
+    "https://www.lazyportfolioetf.com/etf/invesco-qqq-trust-qqq/",
+    "https://www.lazyportfolioetf.com/etf/spdr-sp-500-spy-dividend-yield/",
+    "https://www.lazyportfolioetf.com/etf/ishares-7-10-year-treasury-bond-ief/"
+]
+
+# Ejecutar
+df_resultados = scrape_multiple_lazyportfolio_30y_metrics(urls)
+
+# Mostrar
+print(df_resultados)
