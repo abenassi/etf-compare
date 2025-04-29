@@ -1,20 +1,22 @@
-[project]
+[tool.poetry]
 name = "etf-compare"
 version = "0.1.0"
 description = "ETF Comparison Tool for analyzing and comparing financial metrics of ETFs and lazy portfolios"
-requires-python = ">=3.11"
-dependencies = [
-    "beautifulsoup4>=4.13.4",
-    "pandas>=2.2.3",
-    "plotly>=6.0.1",
-    "requests>=2.32.3",
-    "streamlit>=1.44.1",
-    "trafilatura>=2.0.0",
+authors = ["Your Name <your.email@example.com>"]
+packages = [
+    { include = "*.py" },
 ]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+beautifulsoup4 = ">=4.13.4"
+pandas = ">=2.2.3"
+plotly = ">=6.0.1"
+requests = ">=2.32.3"
+streamlit = ">=1.44.1"
+trafilatura = ">=2.0.0"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.metadata]
-allow-direct-references = true
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
