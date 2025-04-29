@@ -16,6 +16,7 @@ from visualization import (
     create_radar_chart,
 )
 
+pd.options.display.float_format = "{:.2f}".format
 # Page config
 st.set_page_config(
     page_title="LazyPortfolio ETF Analyzer",
@@ -233,14 +234,15 @@ if st.session_state.data is not None and not filtered_df.empty:
         sort_ascending = st.checkbox("Sort Ascending", value=False)
 
         # Format DataFrame for display
-        display_df = format_dataframe_for_display(filtered_df)
+        display_df = format_dataframe_for_display(
+            filtered_df, sort_col=sort_col, sort_ascending=sort_ascending
+        )
 
         # Sort the DataFrame
         df_col_name = sort_col_mapping[sort_col]
-        display_df = display_df.sort_values(by=sort_col, ascending=sort_ascending)
 
         # Apply styling to highlight best Sharpe ratios
-        styled_df = display_df.style.apply(
+        styled_df = display_df.apply(
             highlight_best_nominal_sharpe, subset=["Nominal Sharpe"]
         ).apply(highlight_best_real_sharpe, subset=["Real Sharpe"])
 

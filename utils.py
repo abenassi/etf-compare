@@ -1,6 +1,9 @@
 import pandas as pd
 import streamlit as st
 
+# Configurar el formato global de números en pandas
+pd.options.display.float_format = "{:.2f}".format
+
 
 def filter_dataframe(
     df, min_nominal_return=None, min_real_return=None, max_std_dev=None
@@ -61,12 +64,14 @@ def highlight_best_real_sharpe(s):
     return ["background-color: #ADD8E6" if v else "" for v in is_max]
 
 
-def format_dataframe_for_display(df):
+def format_dataframe_for_display(df, sort_col=None, sort_ascending=True):
     """
     Format DataFrame for display in Streamlit.
 
     Args:
         df (pd.DataFrame): DataFrame to format
+        sort_col (str, optional): Column to sort by
+        sort_ascending (bool, optional): Whether to sort in ascending order
 
     Returns:
         pd.DataFrame: Formatted DataFrame
@@ -108,6 +113,28 @@ def format_dataframe_for_display(df):
     # Remove the URL column from display
     if "url" in display_df.columns:
         display_df = display_df.drop(columns=["url"])
+
+    # Sort the DataFrame if a sort column is provided
+    if sort_col and sort_col in display_df.columns:
+        display_df = display_df.sort_values(by=sort_col, ascending=sort_ascending)
+
+    # Round numeric columns to 2 decimal places
+    numeric_cols = [
+        "30Y Nominal Return (%)",
+        "30Y Real Return (%)",
+        "Std Deviation (%)",
+        "Nominal Sharpe",
+        "Real Sharpe",
+    ]
+
+    for col in numeric_cols:
+        if col in display_df.columns:
+            display_df[col] = display_df[col].apply(lambda x: round(x, 2))
+
+    # show only 2 decimal places
+    display_df = display_df.style.format(
+        {col: "{:.2f}" for col in numeric_cols if col in display_df.columns}
+    )
 
     return display_df
 
