@@ -1,0 +1,136 @@
+# Qué muestra la página. Cambiar un ETF = editar este archivo.
+# Fuentes: "yahoo:<ticker>", "hicp:<geo>", "fred:<id>", "bce:<FLUJO/clave>".
+# "hoy.ytm" es el rendimiento al vencimiento de la ficha del emisor: se actualiza a mano (ver README).
+
+desde: "2010-01"
+fx: "bce:EXR/M.USD.EUR.SP00.E"        # dólares por 1 euro
+cuenta: {spread: 0.5, piso: 0.0}      # cuenta remunerada = max(tasa de referencia - spread, piso)
+
+tasas:
+  # Tasa de referencia de corto plazo, % anual. Si hay varias, cada una pisa a la anterior desde que empieza.
+  eur: ["bce:EON/D.EONIA_TO.RATE", "bce:EST/B.EU000A2X2A25.WT"]
+  usd: ["fred:TB3MS"]
+
+vistas:
+  es: {moneda: EUR, simbolo: "€", ipc: "hicp:ES", inflacion_nombre: "inflación de España", set: eur}
+  ea: {moneda: EUR, simbolo: "€", ipc: "hicp:EA", inflacion_nombre: "inflación de la zona euro", set: eur}
+  us: {moneda: USD, simbolo: "US$", ipc: "fred:CPIAUCSL", inflacion_nombre: "inflación de EE.UU.", set: usd}
+
+grupos:
+  - id: liq
+    tag: Liquidez
+    titulo: Plata a mano
+    para: Para emergencias o gastos de los próximos meses. No crece mucho, pero no se cae.
+  - id: med
+    tag: Mediano plazo
+    titulo: Ahorro para un objetivo
+    para: Para algo que vas a comprar en 1 a 5 años, como un depto. Busca perder lo menos posible contra la inflación, sin sustos grandes.
+  - id: jub
+    tag: Jubilación
+    titulo: Ahorro de largo plazo
+    para: Para plata que no vas a tocar en 10 años o más. Sube y baja mucho, pero en el largo plazo es lo que más rinde.
+
+sets:
+  eur:
+    liq:
+      - nombre: Cuenta remunerada
+        detalle: Banco o broker (Trade Republic, MyInvestor…)
+        tipo: cuenta
+        destacado: true
+      - nombre: Fondo monetario en euros
+        detalle: XEON · Xtrackers II EUR Overnight Rate Swap
+        yahoo: XEON.DE
+        moneda_cotiza: EUR
+        salto_max: 0.15
+        hoy: {tasa: true, ter: 0.001}
+    med:
+      - nombre: Bonos de empresas, corto plazo
+        detalle: XZE5 · Xtrackers EUR Corporate Bond Short Duration (0-5 años)
+        destacado: true
+        yahoo: XZE5.DE
+        moneda_cotiza: EUR
+        proxy: [{yahoo: EUNT.DE, moneda_cotiza: EUR, ter_diff: -0.0004}]
+        salto_max: 0.15
+        # Sin dato publicado para XZE5: se usa el de EUNT (bonos de empresas 1-5 años), su referencia más cercana.
+        hoy: {ytm: 0.0396, fecha: "2026-10-16", fuente: "iShares € Corp Bond 1-5yr (EUNT)"}
+      - nombre: Bonos de empresas que vencen en 2028
+        detalle: IVOA · iShares iBonds Dec 2028 Term € Corp
+        yahoo: IVOA.DE
+        moneda_cotiza: EUR
+        sin_plazos: true
+        vence: "diciembre de 2028"
+        hoy: {ytm: 0.0369, fecha: "2026-10-16"}
+      - nombre: Bonos de gobiernos euro, 1 a 3 años
+        detalle: IBCA · iShares € Govt Bond 1-3yr
+        yahoo: IBCA.DE
+        moneda_cotiza: EUR
+        salto_max: 0.15
+        hoy: {ytm: 0.0341, fecha: "2026-10-16"}
+    jub:
+      - nombre: Acciones de todo el mundo
+        detalle: VWCE · Vanguard FTSE All-World
+        destacado: true
+        yahoo: VWCE.DE
+        moneda_cotiza: EUR
+        proxy: [{yahoo: ACWI, moneda_cotiza: USD, ter_diff: -0.0018}]
+        salto_max: 0.35
+      - nombre: Acciones de países desarrollados
+        detalle: IWDA/EUNL · iShares Core MSCI World
+        yahoo: EUNL.DE
+        moneda_cotiza: EUR
+        salto_max: 0.35
+      - nombre: S&P 500 (EE.UU.)
+        detalle: CSPX · iShares Core S&P 500
+        yahoo: CSPX.AS
+        moneda_cotiza: USD
+        proxy: [{yahoo: "^SP500TR", moneda_cotiza: USD, ter_diff: 0.0007}]
+        salto_max: 0.35
+      - nombre: Nasdaq 100 (tecnológicas, más riesgo)
+        detalle: CNDX · iShares Nasdaq 100
+        yahoo: CNDX.AS
+        moneda_cotiza: USD
+        proxy: [{yahoo: QQQ, moneda_cotiza: USD, ter_diff: 0.001}]
+        salto_max: 0.35
+  usd:
+    liq:
+      - nombre: Cuenta remunerada
+        detalle: Banco o broker en EE.UU.
+        tipo: cuenta
+        destacado: true
+      - nombre: Letras del Tesoro de EE.UU.
+        detalle: BIL · SPDR Bloomberg 1-3 Month T-Bill
+        yahoo: BIL
+        moneda_cotiza: USD
+        salto_max: 0.15
+        hoy: {tasa: true, ter: 0.0014}
+    med:
+      - nombre: Bonos de empresas, corto plazo
+        detalle: VCSH · Vanguard Short-Term Corporate Bond
+        destacado: true
+        yahoo: VCSH
+        moneda_cotiza: USD
+        salto_max: 0.15
+        hoy: {ytm: 0.0546, fecha: "2026-10-15"}
+      - nombre: Bonos de empresas 1-5 años
+        detalle: IGSB · iShares 1-5 Year Investment Grade Corporate
+        yahoo: IGSB
+        moneda_cotiza: USD
+        salto_max: 0.15
+    jub:
+      - nombre: Acciones de todo el mundo
+        detalle: VT · Vanguard Total World Stock
+        destacado: true
+        yahoo: VT
+        moneda_cotiza: USD
+        salto_max: 0.35
+      - nombre: S&P 500 (EE.UU.)
+        detalle: VOO · Vanguard S&P 500
+        yahoo: VOO
+        moneda_cotiza: USD
+        proxy: [{yahoo: "^SP500TR", moneda_cotiza: USD, ter_diff: 0.0003}]
+        salto_max: 0.35
+      - nombre: Nasdaq 100 (tecnológicas, más riesgo)
+        detalle: QQQ · Invesco QQQ
+        yahoo: QQQ
+        moneda_cotiza: USD
+        salto_max: 0.35
