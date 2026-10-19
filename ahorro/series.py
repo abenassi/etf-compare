@@ -45,10 +45,30 @@ def cuenta_modelada(tasa_anual_pct: pd.Series, spread: float = 0.5, piso: float 
     return 100 * crec.cumprod()
 
 
-def validar(nombre: str, s: pd.Series, salto_max: float) -> list[str]:
+def mezcla(componentes: list[pd.Series], pesos: list[float]) -> pd.Series:
+    """Cartera con rebalanceo mensual: índice base 100 con el promedio ponderado de los retornos."""
+    df = pd.concat(componentes, axis=1).dropna()
+    r = (df.pct_change().iloc[1:] * pesos).sum(axis=1)
+    return 100 * pd.concat([pd.Series([1.0], index=df.index[:1]), 1 + r]).cumprod()
+
+
+def bono_sintetico(rendimiento_pct: pd.Series, duracion: float) -> pd.Series:
+    """Índice base 100 de un bono a plazo constante: devenga la tasa y pierde duración × suba de tasa."""
+    y = rendimiento_pct.dropna() / 100
+    r = y.shift(1) / 12 - duracion * y.diff()
+    r.iloc[0] = 0.0
+    return 100 * (1 + r).cumprod()
+
+
+def fondo_de_tasa(tasa_anual_pct: pd.Series, ter: float = 0.0) -> pd.Series:
+    """Fondo monetario que replica la tasa overnight menos su comisión, incluso con tasas negativas."""
+    return cuenta_modelada(tasa_anual_pct, spread=ter * 100, piso=-100.0)
+
+
+def validar(nombre: str, s: pd.Series, salto_max: float, desde: str = DESDE) -> list[str]:
     errores = []
-    if s.empty or s.index[0] > pd.Period(DESDE, freq="M"):
-        errores.append(f"{nombre}: no cubre desde {DESDE} (empieza en {s.index[0] if len(s) else '-'})")
+    if s.empty or s.index[0] > pd.Period(desde, freq="M"):
+        errores.append(f"{nombre}: no cubre desde {desde} (empieza en {s.index[0] if len(s) else '-'})")
     for mes in s.index[s.isna()]:
         errores.append(f"{nombre}: mes vacío en {mes}")
     r = s.dropna().pct_change().iloc[1:]

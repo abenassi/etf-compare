@@ -5,7 +5,7 @@ import yaml
 from ahorro import build
 
 
-def plano(n=200, inicio="2009-01", r=0.003):
+def plano(n=330, inicio="1998-01", r=0.003):
     return pd.Series([100 * (1 + r) ** i for i in range(n)], index=pd.period_range(inicio, periods=n, freq="M"))
 
 
@@ -17,9 +17,11 @@ def config():
 
 def obtener_falso(nombre):
     if "EONIA" in nombre or "EST/" in nombre or "TB3MS" in nombre:
-        return pd.Series(2.0, index=pd.period_range("2005-01", periods=260, freq="M"))
+        return pd.Series(2.0, index=pd.period_range("1995-01", periods=380, freq="M"))
     if "EXR" in nombre:
-        return pd.Series(1.1, index=pd.period_range("2005-01", periods=260, freq="M"))
+        return pd.Series(1.1, index=pd.period_range("1995-01", periods=380, freq="M"))
+    if nombre.startswith("bbk:"):
+        return pd.Series(3.0, index=pd.period_range("1995-01", periods=380, freq="M"))
     if nombre == "yahoo:IVOA.DE":
         return plano(30, "2023-09")
     return plano()
@@ -35,7 +37,7 @@ def test_build_produce_las_tres_vistas(config):
     g = out["es"]["grupos"]
     assert [x["id"] for x in g] == ["liq", "med", "jub"]
     assert all(sum(bool(i["destacado"]) for i in x["instrumentos"]) == 1 for x in g)
-    assert out["es"]["desde"] == "2010-01"
+    assert out["es"]["desde"] == "2000-01"
     assert out["us"]["moneda"] == "USD"
     assert len(out["es"]["grafico"]["meses"]) == 121
     assert len(out["es"]["grafico"]["inflacion"]) == 121
@@ -111,3 +113,14 @@ def test_build_falla_si_etf_tiene_un_mes_faltante(config):
 def test_build_incluye_rendimiento_nominal(config):
     vwce = instrumentos(build.construir(config, obtener_falso)["es"])[5]
     assert vwce["rend_nominal_anual"] == pytest.approx(1.003 ** 12 - 1)
+
+
+def test_grafico_liquidez_usa_el_fondo_monetario(config):
+    graf = build.construir(config, obtener_falso)["es"]["grafico"]
+    liq = next(x for x in graf["series"] if x["grupo"] == "liq")
+    assert liq["valores"][-1] == pytest.approx(10000 * 1.003 ** 120)  # XEON (plano), no la cuenta al 1,5%
+
+
+def test_instrumento_con_proxy_dice_que_hay_antes(config):
+    xze5 = instrumentos(build.construir(config, obtener_falso)["es"])[2]
+    assert "alemán" in xze5["antes"]

@@ -1,8 +1,15 @@
 # Qué muestra la página. Cambiar un ETF = editar este archivo.
 # Fuentes: "yahoo:<ticker>", "hicp:<geo>", "fred:<id>", "bce:<FLUJO/clave>".
+# Proxies (se encadenan en orden, cada uno completa la historia anterior del previo):
+#   {yahoo: X, moneda_cotiza, ter_diff}                         otro fondo o índice
+#   {mezcla: [{yahoo: X, peso: 0.6}, ...], moneda_cotiza, ter_diff}  cartera con rebalanceo mensual
+#   {bono: "bbk:<clave>", duracion: 2.0, moneda_cotiza, ter_diff}     bono sintético desde una tasa
+#   {tasa: eur|usd, ter, moneda_cotiza}                           fondo que replica la tasa overnight
+# ter_diff = TER del fondo - TER del proxy (negativo si el fondo es más barato).
+# "antes" es el texto que ve la persona sobre qué se usó antes del dato real del fondo.
 # "hoy.ytm" es el rendimiento al vencimiento de la ficha del emisor: se actualiza a mano (ver README).
 
-desde: "2010-01"
+desde: "2000-01"
 fx: "bce:EXR/M.USD.EUR.SP00.E"        # dólares por 1 euro
 cuenta: {spread: 0.5, piso: 0.0}      # cuenta remunerada = max(tasa de referencia - spread, piso)
 
@@ -42,6 +49,9 @@ sets:
         yahoo: XEON.DE
         moneda_cotiza: EUR
         salto_max: 0.15
+        proxy: [{tasa: eur, ter: 0.001, moneda_cotiza: EUR}]
+        antes: la tasa del BCE (EONIA) menos la comisión
+        grafico: true
         hoy: {tasa: true, ter: 0.001}
     med:
       - nombre: Bonos de empresas, corto plazo
@@ -49,7 +59,10 @@ sets:
         destacado: true
         yahoo: XZE5.DE
         moneda_cotiza: EUR
-        proxy: [{yahoo: EUNT.DE, moneda_cotiza: EUR, ter_diff: -0.0004}]
+        proxy:
+          - {yahoo: EUNT.DE, moneda_cotiza: EUR, ter_diff: -0.0004}
+          - {bono: "bbk:BBSIS/M.I.ZST.ZI.EUR.S1311.B.A604.R02XX.R.A.A._Z._Z.A", duracion: 2.5, moneda_cotiza: EUR, ter_diff: 0.0016}
+        antes: un fondo parecido (EUNT) y, antes de 2009, una aproximación con bonos del gobierno alemán a 2 años
         salto_max: 0.15
         # Sin dato publicado para XZE5: se usa el de EUNT (bonos de empresas 1-5 años), su referencia más cercana.
         hoy: {ytm: 0.0396, fecha: "2026-10-16", fuente: "iShares € Corp Bond 1-5yr (EUNT)"}
@@ -64,6 +77,9 @@ sets:
         detalle: IBCA · iShares € Govt Bond 1-3yr
         yahoo: IBCA.DE
         moneda_cotiza: EUR
+        proxy:
+          - {bono: "bbk:BBSIS/M.I.ZST.ZI.EUR.S1311.B.A604.R02XX.R.A.A._Z._Z.A", duracion: 1.9, moneda_cotiza: EUR, ter_diff: 0.001}
+        antes: una aproximación con bonos del gobierno alemán a 2 años
         salto_max: 0.15
         hoy: {ytm: 0.0341, fecha: "2026-10-16"}
     jub:
@@ -72,12 +88,19 @@ sets:
         destacado: true
         yahoo: VWCE.DE
         moneda_cotiza: EUR
-        proxy: [{yahoo: ACWI, moneda_cotiza: USD, ter_diff: -0.0018}]
+        proxy:
+          - {yahoo: ACWI, moneda_cotiza: USD, ter_diff: -0.0013}
+          - {mezcla: [{yahoo: VTSMX, peso: 0.6}, {yahoo: VGTSX, peso: 0.4}], moneda_cotiza: USD, ter_diff: 0.0}
+        antes: un ETF del mismo tipo (ACWI) y, antes de 2008, fondos indexados de Vanguard (60% EE.UU., 40% resto del mundo)
         salto_max: 0.35
       - nombre: Acciones de países desarrollados
         detalle: IWDA/EUNL · iShares Core MSCI World
         yahoo: EUNL.DE
         moneda_cotiza: EUR
+        proxy:
+          - {yahoo: ACWI, moneda_cotiza: USD, ter_diff: -0.0012}
+          - {mezcla: [{yahoo: VTSMX, peso: 0.6}, {yahoo: VGTSX, peso: 0.4}], moneda_cotiza: USD, ter_diff: 0.0}
+        antes: un ETF de acciones del mundo (ACWI) y, antes de 2008, fondos indexados de Vanguard
         salto_max: 0.35
       - nombre: S&P 500 (EE.UU.)
         detalle: CSPX · iShares Core S&P 500
@@ -90,6 +113,7 @@ sets:
         yahoo: CNDX.AS
         moneda_cotiza: USD
         proxy: [{yahoo: QQQ, moneda_cotiza: USD, ter_diff: 0.001}]
+        antes: QQQ, el ETF de EE.UU. que sigue el mismo índice
         salto_max: 0.35
   usd:
     liq:
@@ -102,6 +126,9 @@ sets:
         yahoo: BIL
         moneda_cotiza: USD
         salto_max: 0.15
+        proxy: [{tasa: usd, ter: 0.0014, moneda_cotiza: USD}]
+        antes: la tasa de las letras del Tesoro a 3 meses menos la comisión
+        grafico: true
         hoy: {tasa: true, ter: 0.0014}
     med:
       - nombre: Bonos de empresas, corto plazo
@@ -109,12 +136,16 @@ sets:
         destacado: true
         yahoo: VCSH
         moneda_cotiza: USD
+        proxy: [{yahoo: VFSTX, moneda_cotiza: USD, ter_diff: -0.0017}]
+        antes: el fondo de Vanguard de bonos de empresas de corto plazo (VFSTX)
         salto_max: 0.15
         hoy: {ytm: 0.0546, fecha: "2026-10-15"}
       - nombre: Bonos de empresas 1-5 años
         detalle: IGSB · iShares 1-5 Year Investment Grade Corporate
         yahoo: IGSB
         moneda_cotiza: USD
+        proxy: [{yahoo: VFSTX, moneda_cotiza: USD, ter_diff: -0.0016}]
+        antes: el fondo de Vanguard de bonos de empresas de corto plazo (VFSTX)
         salto_max: 0.15
     jub:
       - nombre: Acciones de todo el mundo
@@ -122,6 +153,8 @@ sets:
         destacado: true
         yahoo: VT
         moneda_cotiza: USD
+        proxy: [{mezcla: [{yahoo: VTSMX, peso: 0.6}, {yahoo: VGTSX, peso: 0.4}], moneda_cotiza: USD, ter_diff: -0.0009}]
+        antes: fondos indexados de Vanguard (60% EE.UU., 40% resto del mundo)
         salto_max: 0.35
       - nombre: S&P 500 (EE.UU.)
         detalle: VOO · Vanguard S&P 500

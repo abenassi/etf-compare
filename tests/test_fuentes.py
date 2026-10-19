@@ -56,3 +56,10 @@ def test_actualizar_descarta_el_mes_en_curso(tmp_path):
     out = f.actualizar("x", lambda: s, tmp_path)
     assert out.index[-1] == ahora - 1
     assert str(ahora) not in (tmp_path / "x.csv").read_text()
+
+
+def test_parse_bbk():
+    texto = ('"",BBSIS.M.X,BBSIS.M.X_FLAGS\n"",Titulo largo,\nBBK_UNIT_ENG,percent,\nDecimals,2,\n'
+             'last update,2026-10-01,\n1972-09,6.26,\n1972-10,.,\n1972-11,7.88,\n')
+    out = f.parse_bbk(texto)
+    assert list(out) == [6.26, 7.88] and str(out.index[0]) == "1972-09"

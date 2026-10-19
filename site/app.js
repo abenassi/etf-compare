@@ -28,10 +28,11 @@ function celda(p) {
   return `<td style="background:${pasos[i]};color:${i >= 4 ? "#fff" : "#0b0b0b"}" title="${pc}% de las veces terminaste con menos de lo que pusiste">${pc === 0 ? "nunca" : pc + "%"}</td>`;
 }
 
-// Escala común a toda la vista, para que se compare a simple vista.
-function escala() {
+// Escala común a todos los instrumentos para un mismo plazo, para que se compare a simple vista.
+function escala(plazo) {
   let min = 10000, max = 10000;
-  for (const g of datos.grupos) for (const i of g.instrumentos) for (const e of Object.values(i.escenarios || {})) {
+  for (const g of datos.grupos) for (const i of g.instrumentos) {
+    const e = (i.escenarios || {})[plazo];
     if (!e) continue;
     min = Math.min(min, e.peor); max = Math.max(max, e.mejor);
   }
@@ -66,7 +67,7 @@ function instrumento(g, inst, j) {
   const cabeza = `<div class="row"><span class="name">${esc(inst.nombre)}${inst.destacado ? "<em>recomendado</em>" : ""}</span>
       ${r === null ? "" : `<span class="real">${pct(n, true)} <span class="${r >= 0 ? "pos" : "neg"}">(${pct(r, true)})</span></span>`}</div>
     <div class="row"><span class="tick">${esc(inst.detalle)}</span>${r === null ? "" : `<span class="sub">por año, últimos 10 años (entre paréntesis, contra la inflación)</span>`}</div>
-    ${inst.real_desde && inst.real_desde > datos.desde ? `<div class="sub">Dato real del fondo desde ${esc(inst.real_desde.slice(0, 4))}; antes, el índice que replica.</div>` : ""}`;
+    ${!inst.sin_plazos && inst.real_desde && inst.real_desde > datos.desde ? `<div class="sub">Dato real del fondo desde ${esc(inst.real_desde.slice(0, 4))}; antes, ${esc(inst.antes)}.</div>` : ""}`;
   if (inst.sin_plazos) {
     return `<div class="inst" style="cursor:default">${cabeza}${hoy(inst.hoy, inst)}
       <div class="nota">Es un bono con fecha de vencimiento: si lo tenés hasta ${esc(inst.vence)}, sabés casi exacto cuánto te da.</div></div>`;
@@ -78,8 +79,8 @@ function instrumento(g, inst, j) {
     <div class="detalle">
       <b style="font-size:14px">Si ponías 10.000 ${esc(datos.simbolo)} y los sacabas a los…</b>
       <div class="plazos">${PLAZOS.map(p => `<button class="chip ${p === "3" ? "on" : ""}" data-p="${p}">${p} ${p === "1" ? "año" : "años"}</button>`).join("")}</div>
-      <div class="escs">${escenarios(inst, "3", COLOR[g.id], escala())}</div>
-      <div class="nota">En plata de hoy (ya descontada la inflación). La raya negra marca los 10.000 que pusiste. Peor y mejor son lo peor y lo mejor que pasó desde ${mes(datos.desde)}.</div>
+      <div class="escs">${escenarios(inst, "3", COLOR[g.id], escala("3"))}</div>
+      <div class="nota">En plata de hoy (ya descontada la inflación). La raya negra marca los 10.000 que pusiste; la escala es la misma para todos los instrumentos. Peor y mejor son lo peor y lo mejor que pasó desde ${mes(datos.desde)}.</div>
     </div></div>`;
 }
 
@@ -128,12 +129,12 @@ function pie() {
     ? `<p><b>Impuestos en España:</b> los ETF no se traspasan sin tributar como los fondos indexados: cada venta paga impuesto (19 a 30%). Por eso elegí ETFs de acumulación, que difieren el impuesto hasta que vendés. Si tenés más de 50.000 € en un broker extranjero, mirá el Modelo 720.</p>`
     : "";
   document.getElementById("pie").innerHTML = `
-    <p>Datos a ${mes(datos.datos_al)} · se actualiza cada mes · datos desde ${datos.desde.slice(0, 4)}. Rendimientos en ${datos.moneda === "EUR" ? "euros" : "dólares"}, ya descontadas las comisiones. Antes de que existiera cada ETF se usa el índice que replica. La cuenta remunerada es una aproximación: tasa de referencia menos 0,5 puntos, nunca negativa.</p>
+    <p>Datos a ${mes(datos.datos_al)} · se actualiza cada mes · datos desde ${datos.desde.slice(0, 4)}. Rendimientos en ${datos.moneda === "EUR" ? "euros" : "dólares"}, ya descontadas las comisiones. Antes de que existiera cada fondo se usa el índice que replica o un fondo parecido; en los bonos en euros anteriores a 2009, una aproximación con la tasa del gobierno alemán a 2 años (Bundesbank). La cuenta remunerada es una aproximación: tasa de referencia menos 0,5 puntos, nunca negativa.</p>
     ${fiscal}
     <h4 id="aviso">Aviso legal</h4>
     <p>Esta página es un proyecto personal con fines exclusivamente informativos y educativos. No constituye asesoramiento financiero, de inversión, fiscal ni legal, ni una recomendación personalizada, ni una oferta o solicitud de compra o venta de ningún instrumento financiero. "Recomendado" indica solo la elección del autor para un caso genérico, sin conocer tu situación, tus objetivos ni tu tolerancia al riesgo.</p>
     <p>El autor no es asesor financiero registrado ni está autorizado por la CNMV ni por ningún otro organismo. No tiene relación con los emisores ni con los brokers mencionados, y no recibe comisiones de nadie.</p>
-    <p>Las rentabilidades pasadas no garantizan rentabilidades futuras. Toda inversión puede perder valor, incluido el capital invertido. Los datos salen de fuentes públicas (Yahoo Finance, Eurostat, FRED, BCE y fichas de los emisores), pueden tener errores o estar desactualizados, e incluyen aproximaciones: el índice que replica cada fondo antes de su lanzamiento, y una cuenta remunerada modelada.</p>
+    <p>Las rentabilidades pasadas no garantizan rentabilidades futuras. Toda inversión puede perder valor, incluido el capital invertido. Los datos salen de fuentes públicas (Yahoo Finance, Eurostat, FRED, BCE y fichas de los emisores), pueden tener errores o estar desactualizados, e incluyen aproximaciones: el índice o un fondo parecido antes del lanzamiento de cada fondo, bonos sintéticos y una cuenta remunerada modelada.</p>
     <p>Antes de invertir, leé el folleto y el documento de datos fundamentales (KID) de cada fondo y, si tenés dudas, consultá a un asesor financiero autorizado. El autor no se hace responsable de las decisiones que se tomen a partir de esta información.</p>`;
 }
 
@@ -163,7 +164,7 @@ document.getElementById("grupos").addEventListener("click", e => {
   const g = datos.grupos.find(x => x.id === inst.dataset.g), x = g.instrumentos[inst.dataset.j];
   if (chip) {
     inst.querySelectorAll("[data-p]").forEach(c => c.classList.toggle("on", c === chip));
-    inst.querySelector(".escs").innerHTML = escenarios(x, chip.dataset.p, COLOR[g.id], escala());
+    inst.querySelector(".escs").innerHTML = escenarios(x, chip.dataset.p, COLOR[g.id], escala(chip.dataset.p));
     return;
   }
   inst.classList.toggle("open");

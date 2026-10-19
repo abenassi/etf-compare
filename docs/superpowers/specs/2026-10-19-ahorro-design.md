@@ -112,7 +112,7 @@ El builder puede ajustar la lista verificando tamaño y comisión, siempre que t
 
 - **Precios:** Yahoo Finance vía `yfinance`, mensuales, con `auto_adjust=True` (incluye dividendos). Verificado: hay
   historia mensual de todos los tickers de la tabla.
-- **Extender la historia hacia atrás hasta 2010-01 (decidido con Agustín):** antes de que exista el ETF, se empalma su proxy, se
+- **Extender la historia hacia atrás hasta 2000-01 (decidido con Agustín):** antes de que exista el ETF, se empalma su proxy, se
   convierte a la moneda de la vista y se le descuenta el TER. Proxies verificados:
   - VWCE: ACWI (desde 2008).
   - EUNL: URTH, y antes ACWI.
@@ -146,9 +146,18 @@ El builder puede ajustar la lista verificando tamaño y comisión, siempre que t
 ## Cálculos (definiciones)
 
 Todo se calcula con datos mensuales, en la moneda de la vista, sobre un **período común para todos los instrumentos y
-vistas: desde 2010-01 (cuando hay datos reales o proxy de todos) hasta el último mes disponible**. Lo decidió Agustín
-para que la comparación entre instrumentos sea pareja. Incluye la crisis del euro, el Covid y la caída de bonos de 2022,
-pero no el crash de 2008. El pie lo aclara ("datos desde 2010").
+vistas: desde 2000-01 hasta el último mes disponible**. Primero fue 2010-01. El 2026-10-19 Agustín lo extendió a 2000:
+con 2010-2026 las acciones daban "nunca perdiste plata a 3 años", y eso contradecía la lección. El período incluye
+2000-2002, 2008, la crisis del euro, el Covid y 2022.
+
+Proxies largos:
+- acciones del mundo: mezcla 60/40 de VTSMX y VGTSX;
+- `^SP500TR` y QQQ;
+- bonos en dólares: VFSTX;
+- bonos en euros antes de 2009: un bono sintético armado con la tasa alemana a 2 años del Bundesbank;
+- monetarios: EONIA y T-bill.
+
+La línea de Liquidez del gráfico es el fondo monetario (XEON o BIL), no la cuenta modelada.
 
 - **Rendimiento por año sobre la inflación:** rendimiento anualizado de los últimos 10 años, ya deflactado por la inflación
   de la vista: `(1+nominal)/(1+inflación) − 1`, anualizado. Mi decisión: 10 años, para que coincida con el gráfico.

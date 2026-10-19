@@ -23,11 +23,25 @@ def _tasa(config: dict, set_: str, obtener: Callable[[str], pd.Series]) -> pd.Se
     return out
 
 
-def _serie_etf(inst: dict, moneda: str, fx: pd.Series, obtener) -> pd.Series:
+def _proxy(p: dict, config: dict, obtener) -> pd.Series:
+    """Serie del proxy en su moneda de cotización, según su tipo (ver cabecera de instrumentos.yaml)."""
+    if "yahoo" in p:
+        return obtener(f"yahoo:{p['yahoo']}")
+    if "mezcla" in p:
+        return series.mezcla([obtener(f"yahoo:{c['yahoo']}") for c in p["mezcla"]], [c["peso"] for c in p["mezcla"]])
+    if "bono" in p:
+        return series.bono_sintetico(obtener(p["bono"]), p["duracion"])
+    if "tasa" in p:
+        return series.fondo_de_tasa(_tasa(config, p["tasa"], obtener), p.get("ter", 0.0))
+    raise ValueError(f"proxy desconocido: {p}")
+
+
+def _serie_etf(inst: dict, moneda: str, fx: pd.Series, config: dict, obtener) -> pd.Series:
     real = series.a_moneda(obtener(f"yahoo:{inst['yahoo']}"), inst["moneda_cotiza"], moneda, fx)
     for p in inst.get("proxy") or []:
-        proxy = series.a_moneda(obtener(f"yahoo:{p['yahoo']}"), p["moneda_cotiza"], moneda, fx)
-        real = series.empalmar(real, proxy, p["ter_diff"])
+        proxy = series.a_moneda(_proxy(p, config, obtener), p["moneda_cotiza"], moneda, fx)
+        # un proxy "tasa" ya descuenta su comisión; los demás llevan ter_diff
+        real = series.empalmar(real, proxy, p.get("ter_diff", 0.0))
     return real
 
 
@@ -48,7 +62,8 @@ def _hoy(inst: dict, tasa: pd.Series, cuenta_cfg: dict, infl: float) -> dict | N
 
 def _publico(inst: dict) -> dict:
     return {"nombre": inst["nombre"], "detalle": inst["detalle"], "destacado": bool(inst.get("destacado")),
-            "ticker": inst.get("yahoo"), "sin_plazos": bool(inst.get("sin_plazos")), "vence": inst.get("vence")}
+            "ticker": inst.get("yahoo"), "sin_plazos": bool(inst.get("sin_plazos")), "vence": inst.get("vence"),
+            "antes": inst.get("antes", "el índice que replica")}
 
 
 def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
@@ -66,11 +81,12 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
             if inst.get("tipo") == "cuenta":
                 crudas[k] = series.cuenta_modelada(tasa, cuenta["spread"], cuenta["piso"])
                 continue
-            s = _serie_etf(inst, moneda, fx, obtener)
+            s = _serie_etf(inst, moneda, fx, config, obtener)
             if inst.get("sin_plazos"):
                 aparte[k] = s
                 continue
-            errores += series.validar(f"{inst['detalle'].split(' · ')[0]} ({inst['yahoo']})", s, inst["salto_max"])
+            errores += series.validar(f"{inst['detalle'].split(' · ')[0]} ({inst['yahoo']})", s, inst["salto_max"],
+                                      config["desde"])
             crudas[k] = s
     if errores:
         return {}, [f"[{clave}] {e}" for e in errores]
@@ -104,7 +120,9 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
                       "rend_nominal_anual": metricas.rendimiento_nominal_anual(p),
                       "perdida": {str(a): metricas.pct_perdida(p, a) for a in PLAZOS},
                       "escenarios": {str(a): metricas.escenarios(p, ipc_r, a) for a in PLAZOS}}
-                if inst.get("destacado"):
+                en_grafico = inst.get("grafico") or (inst.get("destacado") and
+                                                     not any(i.get("grafico") for i in set_[g["id"]]))
+                if en_grafico:
                     grafico["series"].append({"grupo": g["id"], "valores": metricas.crecimiento(p)})
             out.append(d)
         grupos.append({**g, "instrumentos": out})
@@ -128,7 +146,7 @@ def construir(config: dict, obtener: Callable[[str], pd.Series]) -> dict[str, di
 def _obtener_real() -> Callable[[str], pd.Series]:
     cache: dict[str, pd.Series] = {}
     bajadores = {"yahoo": fuentes.bajar_yahoo, "hicp": fuentes.bajar_hicp,
-                 "fred": fuentes.bajar_fred, "bce": fuentes.bajar_bce}
+                 "fred": fuentes.bajar_fred, "bce": fuentes.bajar_bce, "bbk": fuentes.bajar_bbk}
 
     def obtener(nombre: str) -> pd.Series:
         if nombre not in cache:

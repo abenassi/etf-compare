@@ -24,7 +24,7 @@ def mensual(s: pd.Series, como: str) -> pd.Series:
 def bajar_yahoo(ticker: str) -> pd.Series:
     import yfinance as yf
 
-    df = yf.download(ticker, start="2005-01-01", interval="1mo", auto_adjust=True, progress=False)
+    df = yf.download(ticker, start="1990-01-01", interval="1mo", auto_adjust=True, progress=False)
     close = df["Close"]
     if isinstance(close, pd.DataFrame):
         close = close.iloc[:, 0]
@@ -60,6 +60,20 @@ def bajar_bce(clave: str) -> pd.Series:
     s = pd.Series(pd.to_numeric(df["OBS_VALUE"], errors="coerce").to_numpy(),
                   index=pd.to_datetime(df["TIME_PERIOD"]))
     return mensual(s, "promedio")
+
+
+def parse_bbk(texto: str) -> pd.Series:
+    """CSV del Bundesbank: cabecera de metadatos y después filas 'AAAA-MM,valor'. '.' = sin dato."""
+    filas = [l.split(",")[:2] for l in texto.splitlines() if len(l) >= 7 and l[:4].isdigit() and l[4] == "-"]
+    s = pd.Series({m: pd.to_numeric(v, errors="coerce") for m, v in filas}, dtype=float).dropna()
+    s.index = pd.PeriodIndex(s.index, freq="M")
+    return s
+
+
+def bajar_bbk(clave: str) -> pd.Series:
+    r = requests.get(f"https://api.statistiken.bundesbank.de/rest/download/{clave}?format=csv&lang=en", timeout=TIMEOUT)
+    r.raise_for_status()
+    return parse_bbk(r.text)
 
 
 def _leer(path: Path) -> pd.Series:

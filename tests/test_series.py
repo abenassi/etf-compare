@@ -68,3 +68,25 @@ def test_validar_detecta_hueco():
 def test_recortar_al_ultimo_mes_comun():
     out = s.recortar({"a": serie(range(1, 30), "2009-06"), "b": serie(range(1, 20))})
     assert all(str(x.index[0]) == "2010-01" and str(x.index[-1]) == "2011-07" for x in out.values())
+
+
+def test_mezcla_rebalancea_por_retornos():
+    a = serie([100, 110, 121]); b = serie([50, 50, 50])
+    out = s.mezcla([a, b], [0.6, 0.4])
+    assert list(out) == pytest.approx([100, 106, 106 * 1.06])
+
+
+def test_bono_sintetico_devenga_y_pierde_si_sube_la_tasa():
+    out = s.bono_sintetico(serie([3.0, 3.0, 4.0]), duracion=2.0)
+    assert out.iloc[1] == pytest.approx(out.iloc[0] * (1 + 0.03 / 12))
+    assert out.iloc[2] == pytest.approx(out.iloc[1] * (1 + 0.03 / 12 - 2.0 * 0.01))
+
+
+def test_fondo_de_tasa_admite_tasas_negativas():
+    out = s.fondo_de_tasa(serie([-0.6, -0.6]))
+    assert out.iloc[1] < out.iloc[0]
+
+
+def test_validar_usa_el_desde_pedido():
+    assert s.validar("X", serie([1, 2], inicio="2005-01"), 0.35, desde="2000-01")
+    assert not s.validar("X", serie([1, 1.1], inicio="2005-01"), 0.35, desde="2005-01")
