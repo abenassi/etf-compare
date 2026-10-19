@@ -22,7 +22,7 @@ Y que, entendido eso, sepa qué ETF concreto usar en cada caso: la página **rec
   1. **Liquidez** (emergencias, gastos de los próximos meses).
   2. **Mediano plazo** (1 a 5 años, un objetivo concreto).
   3. **Jubilación** (10 años o más).
-- En cada grupo, un instrumento destacado ("el que yo usaría") y 1 o 2 alternativas.
+- En cada grupo, un instrumento destacado (etiqueta "Recomendado") y 1 o 2 alternativas.
 - Selector de moneda e inflación arriba: Euro · inflación España (por defecto), Euro · zona euro, Dólar · inflación EE.UU.
   Se puede preseleccionar por link (`?pais=es|ea|us`).
 - Datos reales que se actualizan solos una vez por mes.
@@ -69,8 +69,10 @@ De arriba a abajo:
    punteado gris como "lo que necesitabas para no perder". Las etiquetas van directamente al final de cada línea, con el
    valor final. Lleva un texto corto: las acciones terminaron más arriba, pero en el camino bajaron fuerte.
 5. **Pie:** fecha de los datos, "se actualiza cada mes", "rendimientos ya descontadas las comisiones", "antes de que
-   existiera cada ETF se usa el índice que replica", una nota fiscal de España (ver abajo) y "no es asesoramiento
-   financiero: es lo que yo usaría en tu lugar".
+   existiera cada ETF se usa el índice que replica", una nota fiscal de España (ver abajo) y un aviso legal
+   completo. Arriba de todo va una barra corta: "Información educativa, no es asesoramiento financiero", con link al aviso.
+   El rendimiento de cada instrumento se muestra nominal anual y, entre paréntesis, contra la inflación (pedido de Agustín
+   el 2026-10-19).
 
 Lo que Agustín sacó del mockup y no vuelve: el recuadro de "10.000€ en el colchón desde 2020" y el selector "¿cuándo vas a
 necesitar la plata?" que resaltaba un grupo.

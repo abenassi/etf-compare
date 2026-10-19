@@ -94,13 +94,14 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
             d = _publico(inst)
             d["hoy"] = _hoy(inst, tasa, cuenta, infl)
             if k in aparte:
-                d |= {"real_desde": str(aparte[k].index[0]), "rend_real_anual": None,
+                d |= {"real_desde": str(aparte[k].index[0]), "rend_real_anual": None, "rend_nominal_anual": None,
                       "perdida": None, "escenarios": None}
             else:
                 p = rec[k]
                 d |= {"real_desde": None if inst.get("tipo") == "cuenta" else
                       str(obtener(f"yahoo:{inst['yahoo']}").dropna().index[0]),
                       "rend_real_anual": metricas.rendimiento_real_anual(p, ipc_r),
+                      "rend_nominal_anual": metricas.rendimiento_nominal_anual(p),
                       "perdida": {str(a): metricas.pct_perdida(p, a) for a in PLAZOS},
                       "escenarios": {str(a): metricas.escenarios(p, ipc_r, a) for a in PLAZOS}}
                 if inst.get("destacado"):

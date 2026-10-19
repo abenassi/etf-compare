@@ -62,10 +62,10 @@ function hoy(h, inst) {
 }
 
 function instrumento(g, inst, j) {
-  const r = inst.rend_real_anual;
-  const cabeza = `<div class="row"><span class="name">${esc(inst.nombre)}${inst.destacado ? "<em>el que yo usaría</em>" : ""}</span>
-      ${r === null ? "" : `<span class="real ${r >= 0 ? "pos" : "neg"}">${pct(r, true)}</span>`}</div>
-    <div class="row"><span class="tick">${esc(inst.detalle)}</span>${r === null ? "" : `<span class="sub">por año, sobre la inflación (últimos 10 años)</span>`}</div>
+  const r = inst.rend_real_anual, n = inst.rend_nominal_anual;
+  const cabeza = `<div class="row"><span class="name">${esc(inst.nombre)}${inst.destacado ? "<em>recomendado</em>" : ""}</span>
+      ${r === null ? "" : `<span class="real">${pct(n, true)} <span class="${r >= 0 ? "pos" : "neg"}">(${pct(r, true)})</span></span>`}</div>
+    <div class="row"><span class="tick">${esc(inst.detalle)}</span>${r === null ? "" : `<span class="sub">por año, últimos 10 años (entre paréntesis, contra la inflación)</span>`}</div>
     ${inst.real_desde && inst.real_desde > datos.desde ? `<div class="sub">Dato real del fondo desde ${esc(inst.real_desde.slice(0, 4))}; antes, el índice que replica.</div>` : ""}`;
   if (inst.sin_plazos) {
     return `<div class="inst" style="cursor:default">${cabeza}${hoy(inst.hoy, inst)}
@@ -130,7 +130,11 @@ function pie() {
   document.getElementById("pie").innerHTML = `
     <p>Datos a ${mes(datos.datos_al)} · se actualiza cada mes · datos desde ${datos.desde.slice(0, 4)}. Rendimientos en ${datos.moneda === "EUR" ? "euros" : "dólares"}, ya descontadas las comisiones. Antes de que existiera cada ETF se usa el índice que replica. La cuenta remunerada es una aproximación: tasa de referencia menos 0,5 puntos, nunca negativa.</p>
     ${fiscal}
-    <p>Esto no es asesoramiento financiero: es lo que yo usaría en tu lugar.</p>`;
+    <h4 id="aviso">Aviso legal</h4>
+    <p>Esta página es un proyecto personal con fines exclusivamente informativos y educativos. No constituye asesoramiento financiero, de inversión, fiscal ni legal, ni una recomendación personalizada, ni una oferta o solicitud de compra o venta de ningún instrumento financiero. "Recomendado" indica solo la elección del autor para un caso genérico, sin conocer tu situación, tus objetivos ni tu tolerancia al riesgo.</p>
+    <p>El autor no es asesor financiero registrado ni está autorizado por la CNMV ni por ningún otro organismo. No tiene relación con los emisores ni con los brokers mencionados, y no recibe comisiones de nadie.</p>
+    <p>Las rentabilidades pasadas no garantizan rentabilidades futuras. Toda inversión puede perder valor, incluido el capital invertido. Los datos salen de fuentes públicas (Yahoo Finance, Eurostat, FRED, BCE y fichas de los emisores), pueden tener errores o estar desactualizados, e incluyen aproximaciones: el índice que replica cada fondo antes de su lanzamiento, y una cuenta remunerada modelada.</p>
+    <p>Antes de invertir, leé el folleto y el documento de datos fundamentales (KID) de cada fondo y, si tenés dudas, consultá a un asesor financiero autorizado. El autor no se hace responsable de las decisiones que se tomen a partir de esta información.</p>`;
 }
 
 async function cargar(vista) {

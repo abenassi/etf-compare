@@ -106,3 +106,8 @@ def test_build_falla_si_etf_tiene_un_mes_faltante(config):
 
     with pytest.raises(ValueError, match="VT"):
         build.construir(config, con_hueco)
+
+
+def test_build_incluye_rendimiento_nominal(config):
+    vwce = instrumentos(build.construir(config, obtener_falso)["es"])[5]
+    assert vwce["rend_nominal_anual"] == pytest.approx(1.003 ** 12 - 1)

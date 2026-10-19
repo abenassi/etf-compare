@@ -18,6 +18,11 @@ def rendimiento_real_anual(precios: pd.Series, ipc: pd.Series, meses: int = 120)
     return (r.iloc[-1] / r.iloc[0]) ** (12 / (len(r) - 1)) - 1
 
 
+def rendimiento_nominal_anual(precios: pd.Series, meses: int = 120) -> float:
+    p = precios.iloc[-meses - 1:]
+    return (p.iloc[-1] / p.iloc[0]) ** (12 / (len(p) - 1)) - 1
+
+
 def _ratios(s: pd.Series, anios: int) -> pd.Series:
     n = anios * 12
     v = s.to_numpy()

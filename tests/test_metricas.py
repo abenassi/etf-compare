@@ -66,3 +66,8 @@ def test_inflacion_interanual():
 def test_real_deflacta_y_conserva_ultimo_valor():
     r = m.real(serie([100, 110]), serie([100, 110]))
     assert list(r) == pytest.approx([110, 110])
+
+
+def test_rendimiento_nominal_anual():
+    p = serie([100 * 1.10 ** (i / 12) for i in range(121)])
+    assert m.rendimiento_nominal_anual(p) == pytest.approx(0.10, rel=1e-6)
