@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>¿Dónde pongo mis ahorros? (mockup)</title>
+<style>
+  :root {
+    --surface: #fcfcfb; --card: #ffffff; --line: #e6e5e0;
+    --text: #0b0b0b; --text2: #52514e; --muted: #8a8983;
+    --liq: #1baf7a; --med: #2a78d6; --jub: #eb6834;
+    --good: #0b7a3e; --bad: #b3261e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         background: var(--surface); color: var(--text); }
+  main { max-width: 480px; margin: 0 auto; padding: 16px 16px 48px; }
+  .banner { background: #fff4d6; border: 1px solid #f0d58a; border-radius: 8px; padding: 6px 10px;
+            font-size: 12px; color: #6b5200; margin-bottom: 12px; }
+  h1 { font-size: 24px; line-height: 1.2; margin: 4px 0 4px; }
+  h2 { font-size: 19px; margin: 28px 0 8px; }
+  p { margin: 6px 0; color: var(--text2); }
+  .moneda { display: flex; gap: 6px; margin: 10px 0 4px; flex-wrap: wrap; }
+  .chip { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 6px 12px;
+          font-size: 14px; color: var(--text2); cursor: pointer; }
+  .chip.on { border-color: var(--text); color: var(--text); font-weight: 600; }
+  .grupo { background: var(--card); border: 1px solid var(--line); border-left: 5px solid var(--k);
+           border-radius: 14px; padding: 14px 14px 10px; margin-top: 14px; }
+  .grupo.dim { opacity: .45; }
+  .grupo .tag { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text2); }
+  .grupo .tag i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--k); margin-right: 6px; }
+  .grupo h3 { margin: 4px 0 2px; font-size: 18px; }
+  .grupo .para { font-size: 14px; color: var(--text2); }
+  .inst { border-top: 1px solid var(--line); padding: 10px 0 6px; margin-top: 10px; cursor: pointer; }
+  .inst .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .inst .name { font-weight: 600; }
+  .inst .name em { display: table; margin: 3px 0 0 !important; font-style: normal; font-size: 11px; background: var(--k); color: #fff; border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
+  .inst .tick { font-size: 12px; color: var(--muted); }
+  .inst .real { font-weight: 700; white-space: nowrap; }
+  .inst .real.pos { color: var(--good); } .inst .real.neg { color: var(--bad); }
+  .inst .sub { font-size: 12px; color: var(--muted); }
+  table.chances { width: 100%; border-collapse: separate; border-spacing: 2px; margin-top: 8px; font-size: 13px; }
+  table.chances th { font-weight: 500; color: var(--muted); font-size: 11px; }
+  table.chances td { text-align: center; border-radius: 6px; padding: 7px 0; font-weight: 600; }
+  .detalle { display: none; margin: 8px 0 4px; padding: 12px; background: var(--surface); border-radius: 10px; }
+  .inst.open .detalle { display: block; }
+  .plazos { display: flex; gap: 6px; margin: 6px 0 10px; }
+  .plazos .chip { padding: 4px 10px; font-size: 13px; }
+  .esc { display: grid; grid-template-columns: 64px 1fr 74px; align-items: center; gap: 8px; font-size: 13px; margin: 6px 0; }
+  .esc .lbl { color: var(--text2); }
+  .esc .bar { position: relative; height: 14px; }
+  .esc .bar .base { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--text); left: var(--b); }
+  .esc .bar .fill { position: absolute; top: 2px; height: 10px; border-radius: 4px; }
+  .esc .val { text-align: right; font-weight: 700; }
+  .nota { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .leccion { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-top: 14px; }
+  .leccion svg { width: 100%; height: auto; display: block; margin-top: 8px; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--text2); margin-top: 6px; }
+  .legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+  footer { font-size: 12px; color: var(--muted); margin-top: 28px; border-top: 1px solid var(--line); padding-top: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="banner">MOCKUP: todos los números son inventados, solo para ver el diseño.</div>
+
+  <h1>¿Dónde pongo mis ahorros?</h1>
+  <p>Una guía corta para elegir según <b>cuándo vas a necesitar la plata</b>.</p>
+  <div class="moneda" id="moneda">
+    <button class="chip on" data-m="es">🇪🇸 Euro · inflación España</button>
+    <button class="chip" data-m="ea">🇪🇺 Euro · zona euro</button>
+    <button class="chip" data-m="us">🇺🇸 Dólar</button>
+  </div>
+
+  <div id="grupos"></div>
+
+  <div class="leccion">
+    <h3 style="margin:0 0 4px">10.000€ en los últimos 10 años</h3>
+    <p>Cómo evolucionó la misma plata en cada grupo. La línea punteada es la inflación: lo que necesitabas para no perder poder de compra. Las acciones terminaron mucho más arriba, pero en el camino bajaron fuerte. Si justo ahí necesitabas la plata, perdías.</p>
+    <svg id="diez" viewBox="0 0 340 220" role="img" aria-label="Evolución ilustrativa de 10.000 euros en cada grupo durante 10 años"></svg>
+    <div class="legend" style="flex-wrap:wrap">
+      <span><i style="background:var(--jub)"></i>Jubilación (acciones)</span>
+      <span><i style="background:var(--med)"></i>Mediano plazo (bonos)</span>
+      <span><i style="background:var(--liq)"></i>Liquidez</span>
+      <span><i style="background:repeating-linear-gradient(90deg,#8a8983 0 3px,transparent 3px 5px)"></i>Inflación</span>
+    </div>
+  </div>
+
+  <footer>
+    Datos al 30/09/2026 · se actualizan cada mes. Rendimientos en euros, ya descontadas las comisiones. Antes de que existiera cada ETF se usa el índice que replica.
+    Esto no es asesoramiento financiero: es lo que yo usaría en tu lugar.
+  </footer>
+</main>
+
+<script>
+// Números ficticios. chances = % de períodos en que terminaste con menos plata de la que pusiste (1, 3, 5, 10 años).
+// esc = escenarios con 10.000€ por plazo: [peor, típico, mejor] en euros de hoy.
+const GRUPOS = [
+  { id: "liq", k: "--liq", tag: "Liquidez", titulo: "Plata a mano", para: "Para emergencias o gastos de los próximos meses. No crece mucho, pero no se cae nunca.",
+    inst: [
+      { n: "Cuenta remunerada", t: "Banco o broker, ~2% anual", real: -0.4, top: true,
+        chances: [0, 0, 0, 0], esc: { 1: [9750, 9960, 10150], 3: [9300, 9880, 10300], 5: [8900, 9800, 10400], 10: [8300, 9600, 10500] } },
+      { n: "Monetario en euros", t: "XEON · €STR", real: -0.2,
+        chances: [2, 0, 0, 0], esc: { 1: [9780, 9980, 10180], 3: [9350, 9920, 10350], 5: [8950, 9850, 10450], 10: [8400, 9700, 10600] } },
+    ] },
+  { id: "med", k: "--med", tag: "Mediano plazo", titulo: "Ahorro para un objetivo", para: "Para algo que vas a comprar en 1 a 5 años. Busca ganarle a la inflación sin sustos grandes.",
+    inst: [
+      { n: "Bonos de empresas, corto plazo", t: "XZE5 · Xtrackers € Corp Bond 0-5 años", real: 0.9, top: true,
+        chances: [9, 2, 0, 0], esc: { 1: [9400, 10090, 10600], 3: [9300, 10280, 11000], 5: [9500, 10470, 11400], 10: [9800, 10950, 12200] } },
+      { n: "Bonos de gobiernos euro 1-3 años", t: "IBCA · iShares € Govt Bond 1-3yr", real: 0.3,
+        chances: [14, 5, 1, 0], esc: { 1: [9450, 10030, 10500], 3: [9250, 10090, 10800], 5: [9300, 10150, 11000], 10: [9400, 10300, 11400] } },
+    ] },
+  { id: "jub", k: "--jub", tag: "Jubilación", titulo: "Ahorro de largo plazo", para: "Para plata que no vas a tocar en 10 años o más. Sube y baja mucho, pero en el largo plazo es lo que más rinde.",
+    inst: [
+      { n: "Acciones de todo el mundo", t: "VWCE · FTSE All-World", real: 5.8, top: true,
+        chances: [24, 13, 7, 1], esc: { 1: [6100, 10580, 13800], 3: [6300, 11850, 16900], 5: [6900, 13300, 20400], 10: [8800, 17600, 31000] } },
+      { n: "S&P 500 (EE.UU.)", t: "CSPX · iShares Core S&P 500", real: 7.1,
+        chances: [23, 12, 6, 2], esc: { 1: [5900, 10710, 14200], 3: [6000, 12300, 17800], 5: [6400, 14100, 22300], 10: [7900, 19800, 36000] } },
+      { n: "Nasdaq 100 (tecnológicas)", t: "CNDX · iShares Nasdaq 100", real: 9.4,
+        chances: [27, 17, 11, 4], esc: { 1: [4300, 10900, 16100], 3: [3600, 13100, 21500], 5: [3900, 15600, 29000], 10: [5200, 24500, 52000] } },
+    ] },
+];
+
+const eur = v => v.toLocaleString("es-ES") + "€";
+// Celda de chances: un solo tono (naranja-rojo), más oscuro = más riesgo de perder plata.
+function cell(p) {
+  const steps = ["#f3f2ee", "#fbd9c9", "#f6b294", "#ee8a5f", "#d4582b", "#a83d17"];
+  const i = p === 0 ? 0 : Math.min(5, 1 + Math.floor(p / 7));
+  return `<td style="background:${steps[i]};color:${i >= 4 ? "#fff" : "#0b0b0b"}" title="${p}% de las veces terminaste con menos de lo que pusiste">${p === 0 ? "nunca" : p + "%"}</td>`;
+}
+
+function escenario(inst, plazo, color) {
+  const [lo, mid, hi] = inst.esc[plazo];
+  const min = 3000, max = 36000, pos = v => ((Math.min(v, max) - min) / (max - min) * 100).toFixed(1) + "%";
+  const fila = (lbl, v) => `<div class="esc"><span class="lbl">${lbl}</span>
+      <div class="bar" style="--b:${pos(10000)}"><div class="fill" style="left:${pos(Math.min(v,10000))};width:calc(${pos(Math.max(v,10000))} - ${pos(Math.min(v,10000))});background:${color};opacity:${lbl === "Típico" ? 1 : .55}"></div><div class="base"></div></div>
+      <span class="val" style="color:${v < 10000 ? "var(--bad)" : "var(--text)"}">${eur(v)}</span></div>`;
+  return fila("Peor", lo) + fila("Típico", mid) + fila("Mejor", hi);
+}
+
+function render(sel) {
+  document.getElementById("grupos").innerHTML = GRUPOS.map(g => {
+    const color = getComputedStyle(document.documentElement).getPropertyValue(g.k).trim();
+    return `<section class="grupo ${sel && sel !== g.id ? "dim" : ""}" style="--k:var(${g.k})">
+      <div class="tag"><i></i>${g.tag}</div>
+      <h3>${g.titulo}</h3>
+      <div class="para">${g.para}</div>
+      ${g.inst.map((x, j) => `<div class="inst" data-g="${g.id}" data-j="${j}">
+        <div class="row"><span class="name">${x.n}${x.top ? "<em>el que yo usaría</em>" : ""}</span>
+          <span class="real ${x.real >= 0 ? "pos" : "neg"}">${x.real >= 0 ? "+" : ""}${x.real.toFixed(1).replace(".", ",")}%</span></div>
+        <div class="row"><span class="tick">${x.t}</span><span class="sub">por año, sobre la inflación</span></div>
+        <table class="chances"><tr><th>Si lo tenés…</th><th>1 año</th><th>3 años</th><th>5 años</th><th>10 años</th></tr>
+          <tr><th style="text-align:left">perdiste plata</th>${x.chances.map(cell).join("")}</tr></table>
+        <div class="detalle">
+          <b style="font-size:14px">Si ponías 10.000€ y los sacabas a los…</b>
+          <div class="plazos">${[1, 3, 5, 10].map(p => `<button class="chip ${p === 3 ? "on" : ""}" data-p="${p}">${p} ${p === 1 ? "año" : "años"}</button>`).join("")}</div>
+          <div class="escs">${escenario(x, 3, color)}</div>
+          <div class="nota">En euros de hoy (descontada la inflación). La raya negra marca los 10.000€ que pusiste.</div>
+        </div>
+      </div>`).join("")}
+    </section>`;
+  }).join("");
+}
+
+render(null);
+
+
+document.getElementById("grupos").addEventListener("click", e => {
+  const inst = e.target.closest(".inst"); if (!inst) return;
+  const chip = e.target.closest("[data-p]");
+  const g = GRUPOS.find(x => x.id === inst.dataset.g), x = g.inst[inst.dataset.j];
+  if (chip) {
+    inst.querySelectorAll("[data-p]").forEach(c => c.classList.toggle("on", c === chip));
+    const color = getComputedStyle(document.documentElement).getPropertyValue(g.k).trim();
+    inst.querySelector(".escs").innerHTML = escenario(x, +chip.dataset.p, color);
+    return;
+  }
+  inst.classList.toggle("open");
+});
+
+document.getElementById("moneda").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  document.querySelectorAll("#moneda .chip").forEach(x => x.classList.toggle("on", x === b));
+});
+
+// Series ficticias mensuales, 10 años. Sustituir por datos reales.
+(function () {
+  const N = 120, rnd = (seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647)(42);
+  function serie(anual, vol, shocks) {
+    let v = 10000, out = [v];
+    for (let i = 1; i <= N; i++) {
+      v *= 1 + anual / 12 + vol * (rnd() - 0.5) + (shocks[i] || 0);
+      out.push(v);
+    }
+    return out;
+  }
+  const S = [
+    { k: "--jub", d: serie(0.095, 0.045, { 26: -0.07, 50: -0.12, 51: -0.10, 72: -0.05, 75: -0.05 }), lbl: "Acciones" },
+    { k: "--med", d: serie(0.022, 0.006, { 72: -0.02, 75: -0.02, 78: -0.015 }), lbl: "Bonos" },
+    { k: "--liq", d: serie(0.012, 0.0006, {}), lbl: "Liquidez" },
+  ];
+  const infl = [10000]; for (let i = 1; i <= N; i++) infl.push(infl[i - 1] * (1 + (i < 60 ? 0.012 : i < 84 ? 0.055 : 0.025) / 12));
+  const all = S.flatMap(x => x.d).concat(infl), lo = 8000, hi = Math.max(...all) * 1.05;
+  const X = i => 34 + i / N * 220, Y = v => 200 - (v - lo) / (hi - lo) * 185;
+  const path = d => d.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+  const css = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+  const fmt = v => Math.round(v / 100) / 10 + "k";
+  let svg = "";
+  for (const t of [10000, 15000, 20000]) if (t < hi) svg += `<line x1="34" x2="254" y1="${Y(t)}" y2="${Y(t)}" stroke="#e6e5e0"/><text x="0" y="${Y(t) + 3}" font-size="10" fill="#8a8983">${t / 1000}k€</text>`;
+  svg += `<path d="${path(infl)}" fill="none" stroke="#8a8983" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  const fin = [...S.map(x => ({ v: x.d[N], c: css(x.k), t: x.lbl })), { v: infl[N], c: "#8a8983", t: "Inflac." }].sort((a, b) => b.v - a.v);
+  for (const x of S) svg += `<path d="${path(x.d)}" fill="none" stroke="${css(x.k)}" stroke-width="2" stroke-linejoin="round"/>`;
+  // etiquetas directas al final, separadas para que no se pisen
+  let prev = -99;
+  for (const f of fin) {
+    let y = Math.max(Y(f.v) + 3, prev + 12); prev = y;
+    svg += `<text x="259" y="${y}" font-size="10" fill="#0b0b0b"><tspan font-weight="700">${fmt(f.v)}€</tspan> <tspan fill="#52514e">${f.t}</tspan></text>`;
+  }
+  const minIdx = S[0].d.indexOf(Math.min(...S[0].d.slice(40, 60)));
+  svg += `<circle cx="${X(minIdx)}" cy="${Y(S[0].d[minIdx])}" r="4" fill="${css("--jub")}" stroke="#fff" stroke-width="2"/>`;
+  svg += `<text x="34" y="216" font-size="10" fill="#8a8983">2016</text><text x="232" y="216" font-size="10" fill="#8a8983">2026</text>`;
+  const el = document.getElementById("diez");
+  el.setAttribute("viewBox", "0 0 340 220"); el.innerHTML = svg;
+})();
+</script>
+</body>
+</html>
