@@ -84,3 +84,25 @@ def test_hoy_real_y_nota_cuando_pierde_contra_inflacion(config):
 
     xze5 = instrumentos(build.construir(config, inflacion_alta)["es"])[2]
     assert xze5["hoy"]["real"] < 0 and xze5["hoy"]["nota"]
+
+
+def test_build_ipc_con_mes_faltante(config):
+    def con_hueco(n):
+        s = obtener_falso(n)
+        if n == "fred:CPIAUCSL":
+            s = s.drop(s.index[-8])  # como octubre de 2025, que BLS no publicó
+        return s
+
+    us = build.construir(config, con_hueco)["us"]
+    assert us["inflacion_interanual"] == pytest.approx(1.003 ** 12 - 1)
+    meses = pd.PeriodIndex(us["grafico"]["meses"], freq="M")
+    assert len(meses) == 121 and (meses[1:] - meses[:-1] == meses.freq).all()
+
+
+def test_build_falla_si_etf_tiene_un_mes_faltante(config):
+    def con_hueco(n):
+        s = obtener_falso(n)
+        return s.drop(s.index[-8]) if n == "yahoo:VT" else s
+
+    with pytest.raises(ValueError, match="VT"):
+        build.construir(config, con_hueco)

@@ -23,7 +23,7 @@ function vistaDeUrl() {
 function celda(p) {
   if (p === null || p === undefined) return `<td style="background:#f3f2ee;color:${GRIS}" title="sin datos suficientes">–</td>`;
   const pasos = ["#f3f2ee", "#fbd9c9", "#f6b294", "#ee8a5f", "#d4582b", "#a83d17"];
-  const pc = Math.round(p * 100);
+  const pc = p === 0 ? 0 : Math.max(1, Math.round(p * 100)); // "nunca" solo si de verdad nunca pasó
   const i = pc === 0 ? 0 : Math.min(5, 1 + Math.floor(pc / 7));
   return `<td style="background:${pasos[i]};color:${i >= 4 ? "#fff" : "#0b0b0b"}" title="${pc}% de las veces terminaste con menos de lo que pusiste">${pc === 0 ? "nunca" : pc + "%"}</td>`;
 }
@@ -65,7 +65,8 @@ function instrumento(g, inst, j) {
   const r = inst.rend_real_anual;
   const cabeza = `<div class="row"><span class="name">${esc(inst.nombre)}${inst.destacado ? "<em>el que yo usaría</em>" : ""}</span>
       ${r === null ? "" : `<span class="real ${r >= 0 ? "pos" : "neg"}">${pct(r, true)}</span>`}</div>
-    <div class="row"><span class="tick">${esc(inst.detalle)}</span>${r === null ? "" : `<span class="sub">por año, sobre la inflación (últimos 10 años)</span>`}</div>`;
+    <div class="row"><span class="tick">${esc(inst.detalle)}</span>${r === null ? "" : `<span class="sub">por año, sobre la inflación (últimos 10 años)</span>`}</div>
+    ${inst.real_desde && inst.real_desde > datos.desde ? `<div class="sub">Dato real del fondo desde ${esc(inst.real_desde.slice(0, 4))}; antes, el índice que replica.</div>` : ""}`;
   if (inst.sin_plazos) {
     return `<div class="inst" style="cursor:default">${cabeza}${hoy(inst.hoy, inst)}
       <div class="nota">Es un bono con fecha de vencimiento: si lo tenés hasta ${esc(inst.vence)}, sabés casi exacto cuánto te da.</div></div>`;

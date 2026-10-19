@@ -60,4 +60,16 @@ def validar(nombre: str, s: pd.Series, salto_max: float) -> list[str]:
 def recortar(series: dict[str, pd.Series], desde: str = DESDE) -> dict[str, pd.Series]:
     inicio = pd.Period(desde, freq="M")
     fin = min(s.dropna().index[-1] for s in series.values())
-    return {k: s[(s.index >= inicio) & (s.index <= fin)] for k, s in series.items()}
+    meses = pd.period_range(inicio, fin, freq="M")
+    # reindexar: un mes que falta en la fuente queda como NaN visible, no como un salto silencioso de índice
+    return {k: s.reindex(meses) for k, s in series.items()}
+
+
+def completar_ipc(ipc: pd.Series) -> tuple[pd.Series, list[str]]:
+    """Interpola en escala logarítmica los meses faltantes del IPC (p. ej. un mes que el organismo no publicó)."""
+    faltan = [str(m) for m in ipc.index[ipc.isna()]]
+    if not faltan:
+        return ipc, []
+    import numpy as np
+    out = pd.Series(np.exp(np.log(ipc).interpolate(limit_area="inside")), index=ipc.index)
+    return out, [f"IPC sin dato en {', '.join(faltan)}: interpolado"]

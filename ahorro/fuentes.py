@@ -70,6 +70,8 @@ def _leer(path: Path) -> pd.Series:
 def actualizar(nombre: str, bajar: Callable[[], pd.Series], dir_raw: Path = DIR_RAW) -> pd.Series:
     path = Path(dir_raw) / f"{nombre}.csv"
     cache = _leer(path) if path.exists() else None
+    if cache is not None:
+        cache = cache[cache.index < pd.Period.now("M")]
     try:
         nueva = bajar().dropna()
         if nueva.empty:
@@ -80,6 +82,7 @@ def actualizar(nombre: str, bajar: Callable[[], pd.Series], dir_raw: Path = DIR_
         print(f"AVISO: {nombre} sin actualizar: {e}", file=sys.stderr)
         return cache
     s = nueva if cache is None else pd.concat([cache[~cache.index.isin(nueva.index)], nueva]).sort_index()
+    s = s[s.index < pd.Period.now("M")]  # el mes en curso todavía no cerró: no se guarda
     path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame({"mes": s.index.astype(str), "valor": s.to_numpy()}).to_csv(path, index=False)
     return s

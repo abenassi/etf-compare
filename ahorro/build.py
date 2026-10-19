@@ -76,7 +76,13 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
         return {}, [f"[{clave}] {e}" for e in errores]
 
     rec = series.recortar(crudas, config["desde"])
-    ipc_r = rec.pop("__ipc__")
+    ipc_r, avisos = series.completar_ipc(rec.pop("__ipc__"))
+    for a in avisos:
+        print(f"AVISO: [{clave}] {a}", file=sys.stderr)
+    nombres = {f"{g}:{j}": i.get("yahoo") or i["nombre"] for g, insts in set_.items() for j, i in enumerate(insts)}
+    huecos = [f"[{clave}] {nombres[k]}: mes vacío en {m}" for k, s in rec.items() for m in s.index[s.isna()]]
+    if huecos or ipc_r.isna().any():
+        return {}, huecos or [f"[{clave}] IPC con huecos en los extremos"]
     infl = metricas.inflacion_interanual(ipc_r)
 
     grupos, grafico = [], {"meses": [str(m) for m in ipc_r.index[-121:]],

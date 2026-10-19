@@ -48,3 +48,11 @@ def test_mensual_promedia_diarias():
 def test_mensual_ultimo_valor():
     idx = pd.to_datetime(["2020-01-02", "2020-01-31"])
     assert list(f.mensual(pd.Series([1.0, 3.0], index=idx), "ultimo")) == [3.0]
+
+
+def test_actualizar_descarta_el_mes_en_curso(tmp_path):
+    ahora = pd.Period.now("M")
+    s = pd.Series([1.0, 2.0, 3.0], index=pd.period_range(ahora - 2, periods=3, freq="M"))
+    out = f.actualizar("x", lambda: s, tmp_path)
+    assert out.index[-1] == ahora - 1
+    assert str(ahora) not in (tmp_path / "x.csv").read_text()
