@@ -194,3 +194,8 @@ poetry.toml
 
 # PyPI configuration file
 .pypirc
+.superpowers/
+
+.venv/
+.superpowers/
+.playwright-mcp/
