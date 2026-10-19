@@ -1,0 +1,58 @@
+name: Actualizar datos y publicar
+
+on:
+  schedule:
+    - cron: "17 6 20 * *"   # día 20 de cada mes, después de que Eurostat publica la inflación
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["site/**"]
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  datos:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync
+      - name: Tests
+        run: uv run pytest
+      - name: Bajar datos y recalcular
+        if: github.event_name != 'push'
+        run: uv run python -m ahorro.build
+      - name: Commitear datos nuevos
+        if: github.event_name != 'push'
+        run: |
+          if [ -n "$(git status --porcelain data site/data)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data site/data
+            git commit -m "Datos al $(python -c "import json; print(json.load(open('site/data/es.json'))['datos_al'])")"
+            git push
+          fi
+
+  publicar:
+    needs: datos
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
