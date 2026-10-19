@@ -87,29 +87,38 @@ Todos son UCITS y se compran desde brokers españoles. Surgen de la investigaci�
 
 Mi decisión, que Agustín puede cambiar: en Liquidez el destacado es la cuenta remunerada y XEON es la alternativa, porque
 Agustín dijo que en ese grupo "la mayoría de las veces va a ser una cuenta remunerada". La cuenta remunerada no tiene serie
-de precios: se modela con €STR menos 0,5 puntos (ajustable en la configuración) y se rotula como aproximación.
+de precios: se modela con €STR menos 0,5 puntos (ajustable en la configuración), **con piso de 0%** (decidido con
+Agustín: entre 2014 y 2022 las tasas fueron negativas, pero los bancos no se las cobraban al ahorrista minorista), y se
+rotula como aproximación. XEON se muestra tal cual, incluidas sus pérdidas chicas de esos años.
+
+**IVOA (mi decisión):** como vence en dic-2028, no lleva tabla de plazos ni escenarios. Solo muestra "Hoy": lo que
+rinde si lo tenés hasta el vencimiento, contra la inflación actual, y la fecha de vencimiento.
 
 La lista vive en un archivo de configuración (`instrumentos.yaml` o similar), no en el código. Cambiar un ETF tiene que
 ser editar ese archivo y nada más.
 
 **Vista dólar (mi decisión):** usa ETFs listados en EE.UU., porque quien ahorra en dólares (residente en EE.UU., o un
-argentino con broker en EE.UU.) compra esos y no UCITS cubiertos a euro. Propuesta: liquidez `SGOV` o `BIL`; mediano
-plazo `VCSH` (destacado) y `IGSB`; jubilación `VT` (destacado), `VOO` y `QQQ`. El builder puede ajustar la lista
-verificando tamaño y comisión.
+argentino con broker en EE.UU.) compra esos y no UCITS cubiertos a euro. Propuesta:
+- Liquidez: el destacado es la cuenta remunerada, modelada con la letra del Tesoro a 3 meses (FRED `TB3MS`) menos
+  0,5 puntos, con piso de 0%; la alternativa es `BIL` (desde 2007).
+- Mediano plazo: `VCSH` (destacado, desde 2009-11) e `IGSB`.
+- Jubilación: `VT` (destacado, desde 2008), `VOO` (completado con `^SP500TR`) y `QQQ`.
+
+El builder puede ajustar la lista verificando tamaño y comisión, siempre que todos tengan datos en el período común.
 
 ## Datos
 
 - **Precios:** Yahoo Finance vía `yfinance`, mensuales, con `auto_adjust=True` (incluye dividendos). Verificado: hay
   historia mensual de todos los tickers de la tabla.
-- **Extender la historia hacia atrás (decidido con Agustín):** antes de que exista el ETF, se empalma su proxy, se
+- **Extender la historia hacia atrás hasta 2010-01 (decidido con Agustín):** antes de que exista el ETF, se empalma su proxy, se
   convierte a la moneda de la vista y se le descuenta el TER. Proxies verificados:
   - VWCE: ACWI (desde 2008).
   - EUNL: URTH, y antes ACWI.
   - CSPX: `^SP500TR` (desde 1988).
   - CNDX: QQQ (desde 1999).
   - XZE5: EUNT, iShares € Corp Bond 1-5yr, `EUNT.DE` (desde 2009-12), menos la diferencia de TER.
-  - XEON: EONIA del BCE (`EON/D.EONIA_TO.RATE`, de 1999 a 2021) empalmado con €STR (`EST/B.EU000A2X2A25.WT`, desde
-    2019-10).
+  - XEON tiene datos reales desde 2008. €STR (`EST/B.EU000A2X2A25.WT`, desde 2019-10) y EONIA antes (`EON/D.EONIA_TO.RATE`)
+    sirven para modelar la cuenta remunerada.
   - El tipo de cambio EUR/USD sale del BCE (`EXR/M.USD.EUR.SP00.E`, desde 1999). Yahoo `EURUSD=X` arranca recién en 2003.
 
   La página aclara desde cuándo es dato real de cada ETF.
@@ -134,7 +143,10 @@ verificando tamaño y comisión.
 
 ## Cálculos (definiciones)
 
-Todo se calcula con datos mensuales, en la moneda de la vista, sobre toda la historia disponible (real más proxy).
+Todo se calcula con datos mensuales, en la moneda de la vista, sobre un **período común para todos los instrumentos y
+vistas: desde 2010-01 (cuando hay datos reales o proxy de todos) hasta el último mes disponible**. Lo decidió Agustín
+para que la comparación entre instrumentos sea pareja. Incluye la crisis del euro, el Covid y la caída de bonos de 2022,
+pero no el crash de 2008. El pie lo aclara ("datos desde 2010").
 
 - **Rendimiento por año sobre la inflación:** rendimiento anualizado de los últimos 10 años, ya deflactado por la inflación
   de la vista: `(1+nominal)/(1+inflación) − 1`, anualizado. Mi decisión: 10 años, para que coincida con el gráfico.
