@@ -154,3 +154,22 @@ def test_build_acepta_monedas_correctas(config):
     def moneda_de(t):
         return reales.get(t, "EUR" if t.endswith(".DE") else "USD")
     assert build.construir(config, obtener_falso, moneda_de=moneda_de)
+
+
+def test_build_embudo_por_plazo(config):
+    emb = build.construir(config, obtener_falso)["es"]["embudo"]
+    assert emb["plazos"] == list(range(1, 16))
+    assert [s["grupo"] for s in emb["series"]] == ["med", "jub"]
+    jub = emb["series"][1]
+    assert len(jub["peor"]) == len(jub["tipico"]) == len(jub["mejor"]) == 15
+    assert all(p <= t <= m for p, t, m in zip(jub["peor"], jub["tipico"], jub["mejor"]))
+    assert len(jub["pierde"]) == 15 and all(0 <= x <= 1 for x in jub["pierde"])
+
+
+def test_build_historia_desde_el_inicio(config):
+    out = build.construir(config, obtener_falso)["es"]
+    h = out["historia"]
+    assert h["meses"][0] == "2000-01" and h["meses"][-1] == out["datos_al"]
+    assert len(h["inflacion"]) == len(h["meses"])
+    assert [s["grupo"] for s in h["series"]] == ["liq", "med", "jub"]
+    assert all(len(s["valores"]) == len(h["meses"]) and s["valores"][0] == pytest.approx(10000) for s in h["series"])

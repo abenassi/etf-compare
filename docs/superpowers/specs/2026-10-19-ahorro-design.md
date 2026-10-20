@@ -65,7 +65,14 @@ De arriba a abajo:
      contra la inflación actual. Va acompañado de una nota honesta cuando queda por debajo, por ejemplo: "hoy la inflación
      está alta: esto protege la mayor parte de tu plata, no toda". Para el mediano plazo el mensaje es perder lo menos
      posible sin arriesgar, no "ganarle seguro a la inflación".
-4. **Gráfico "10.000€ en los últimos 10 años"**: una línea por grupo (su instrumento destacado), más la inflación en
+4. **Dos gráficos (cambio del 2026-10-20, a pedido de Agustín, para que se note que a corto plazo perdés y a largo ganás):**
+   - **"¿Por qué el plazo importa?"**: embudo de 1 a 15 años para el destacado de mediano plazo y el de jubilación. La
+     banda va del peor al mejor caso, la línea es el típico (en plata de hoy) y la raya marca lo que pusiste. Abajo va
+     una tabla con en cuántos casos perdiste contra la inflación a 1, 3, 5, 10 y 15 años.
+   - **"10.000 invertidos en enero de 2000"**: la historia real desde el inicio de los datos. Marca la peor caída de las
+     acciones y cuántos años tardaron en volver a lo que se puso. Reemplaza al gráfico de 10 años, que se describe abajo
+     tal como era originalmente.
+   Gráfico original: **"10.000€ en los últimos 10 años"**: una línea por grupo (su instrumento destacado), más la inflación en
    punteado gris como "lo que necesitabas para no perder". Las etiquetas van directamente al final de cada línea, con el
    valor final. Lleva un texto corto: las acciones terminaron más arriba, pero en el camino bajaron fuerte.
 5. **Pie:** fecha de los datos, "se actualiza cada mes", "rendimientos ya descontadas las comisiones", "antes de que

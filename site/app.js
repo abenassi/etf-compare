@@ -104,34 +104,86 @@ function grupos() {
     </section>`).join("");
 }
 
+const k = v => (v / 1000).toLocaleString("es-ES", { maximumFractionDigits: 1 }) + "k";
+const nombreGrupo = id => datos.grupos.find(g => g.id === id).tag;
+const leyenda = ids => ids.map(id => `<span><i style="background:${COLOR[id]}"></i>${esc(nombreGrupo(id))}</span>`).join("");
+
+// Embudo: resultado de 10.000 según cuántos años los tuviste (peor, típico y mejor desde el inicio de los datos).
+function embudo() {
+  const e = datos.embudo, P = e.plazos, n = P.length - 1;
+  const tope = Math.max(...e.series.flatMap(s => s.tipico)) * 1.5;
+  const piso = Math.min(...e.series.flatMap(s => s.peor)) * 0.9;
+  const X = i => 34 + i / n * 286, Y = v => 205 - (Math.min(v, tope) - piso) / (tope - piso) * 195;
+  const linea = (vals) => vals.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+  let svg = "";
+  const paso = tope - piso > 20000 ? 10000 : 5000;
+  for (let t = Math.ceil(piso / paso) * paso; t < tope; t += paso)
+    svg += `<line x1="34" x2="320" y1="${Y(t)}" y2="${Y(t)}" stroke="#e6e5e0"/><text x="0" y="${Y(t) + 3}" font-size="10" fill="${GRIS}">${k(t)}</text>`;
+  for (const s of e.series) {
+    const banda = linea(s.mejor) + s.peor.map((v, i) => `L${X(n - i).toFixed(1)},${Y(s.peor[n - i]).toFixed(1)}`).join("") + "Z";
+    svg += `<path d="${banda}" fill="${COLOR[s.grupo]}" fill-opacity="${s.grupo === "jub" ? 0.16 : 0.28}" stroke="none"/>`;
+  }
+  svg += `<line x1="34" x2="320" y1="${Y(10000)}" y2="${Y(10000)}" stroke="#0b0b0b" stroke-width="1.2" stroke-dasharray="4 3"/>`;
+  svg += `<text x="36" y="${Y(10000) - 4}" font-size="10" fill="#0b0b0b">lo que pusiste</text>`;
+  for (const s of e.series) svg += `<path d="${linea(s.tipico)}" fill="none" stroke="${COLOR[s.grupo]}" stroke-width="2.2"/>`;
+  const jub = e.series.find(s => s.grupo === "jub");
+  if (jub) {
+    svg += `<circle cx="${X(0)}" cy="${Y(jub.peor[0])}" r="3.5" fill="${COLOR.jub}" stroke="#fff" stroke-width="1.5"/>`;
+    svg += `<text x="${X(0) + 6}" y="${Y(jub.peor[0]) + 4}" font-size="10" fill="#52514e">peor a 1 año: ${plata(jub.peor[0])}</text>`;
+    svg += `<text x="${X(n)}" y="${Y(jub.tipico[n]) - 6}" font-size="10" fill="#0b0b0b" text-anchor="end"><tspan font-weight="700">${plata(jub.tipico[n])}</tspan> típico a ${P[n]} años</text>`;
+  }
+  for (const i of [0, 4, 9, 14].filter(i => i <= n))
+    svg += `<text x="${X(i)}" y="222" font-size="10" fill="${GRIS}" text-anchor="middle">${P[i]} ${P[i] === 1 ? "año" : "años"}</text>`;
+  document.getElementById("embudo").innerHTML = svg;
+  document.getElementById("leyenda-embudo").innerHTML = leyenda(e.series.map(s => s.grupo)) +
+    `<span>banda: de lo peor a lo mejor</span>`;
+  const cols = [0, 2, 4, 9, 14].filter(i => i <= n);
+  document.getElementById("pierde").innerHTML =
+    `<tr><th style="text-align:left">Perdiste contra la inflación…</th>${cols.map(i => `<th>${P[i]} ${P[i] === 1 ? "año" : "años"}</th>`).join("")}</tr>` +
+    e.series.map(s => `<tr><th style="text-align:left">${esc(nombreGrupo(s.grupo))}</th>${cols.map(i => celda(s.pierde[i])).join("")}</tr>`).join("");
+}
+
+// Historia real desde el primer mes de datos.
 function grafico() {
-  const gr = datos.grafico, N = gr.meses.length - 1;
+  const gr = datos.historia, N = gr.meses.length - 1;
   const todas = gr.series.flatMap(s => s.valores).concat(gr.inflacion);
-  const lo = Math.min(...todas) * 0.95, hi = Math.max(...todas) * 1.04;
+  const lo = Math.min(...todas) * 0.92, hi = Math.max(...todas) * 1.04;
   const X = i => 34 + i / N * 196, Y = v => 200 - (v - lo) / (hi - lo) * 185;
   const camino = d => d.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
-  const k = v => (v / 1000).toLocaleString("es-ES", { maximumFractionDigits: 1 }) + "k";
-  const nombre = id => datos.grupos.find(g => g.id === id).tag;
   let svg = "";
-  const paso = hi - lo > 20000 ? 10000 : 5000;
+  const paso = hi - lo > 30000 ? 20000 : hi - lo > 15000 ? 10000 : 5000;
   for (let t = Math.ceil(lo / paso) * paso; t < hi; t += paso)
     svg += `<line x1="34" x2="230" y1="${Y(t)}" y2="${Y(t)}" stroke="#e6e5e0"/><text x="0" y="${Y(t) + 3}" font-size="10" fill="${GRIS}">${k(t)}</text>`;
+  svg += `<line x1="34" x2="230" y1="${Y(10000)}" y2="${Y(10000)}" stroke="#0b0b0b" stroke-width="1" stroke-dasharray="2 3"/>`;
   svg += `<path d="${camino(gr.inflacion)}" fill="none" stroke="${GRIS}" stroke-width="1.5" stroke-dasharray="4 3"/>`;
   for (const s of gr.series)
-    svg += `<path d="${camino(s.valores)}" fill="none" stroke="${COLOR[s.grupo]}" stroke-width="2" stroke-linejoin="round"/>`;
-  const finales = gr.series.map(s => ({ v: s.valores[N], t: nombre(s.grupo) }))
+    svg += `<path d="${camino(s.valores)}" fill="none" stroke="${COLOR[s.grupo]}" stroke-width="1.8" stroke-linejoin="round"/>`;
+  const finales = gr.series.map(s => ({ v: s.valores[N], t: nombreGrupo(s.grupo) }))
     .concat([{ v: gr.inflacion[N], t: "Inflación" }]).sort((a, b) => a.v - b.v);
   let prev = 999; // de abajo hacia arriba, separadas para que no se pisen
   for (const f of finales) {
     const y = Math.min(Y(f.v) + 3, prev - 12); prev = y;
     svg += `<text x="235" y="${y}" font-size="10" fill="#0b0b0b"><tspan font-weight="700">${k(f.v)}</tspan> <tspan fill="#52514e">${esc(f.t)}</tspan></text>`;
   }
-  svg += `<text x="34" y="216" font-size="10" fill="${GRIS}">${gr.meses[0].slice(0, 4)}</text><text x="208" y="216" font-size="10" fill="${GRIS}">${gr.meses[N].slice(0, 4)}</text>`;
-  document.getElementById("diez").innerHTML = svg;
-  document.getElementById("leyenda").innerHTML = gr.series.map(s =>
-    `<span><i style="background:${COLOR[s.grupo]}"></i>${esc(nombre(s.grupo))}</span>`).join("") +
+  const jub = gr.series.find(s => s.grupo === "jub");
+  if (jub) {
+    const v = jub.valores, iMin = v.indexOf(Math.min(...v));
+    let iVuelve = -1;
+    for (let i = N; i >= 0; i--) if (v[i] < 10000) { iVuelve = i + 1; break; }
+    svg += `<circle cx="${X(iMin)}" cy="${Y(v[iMin])}" r="3.5" fill="${COLOR.jub}" stroke="#fff" stroke-width="1.5"/>`;
+    svg += `<text x="${X(iMin) + 6}" y="${Y(v[iMin]) - 2}" font-size="10" fill="#52514e">${pct(v[iMin] / 10000 - 1)} en ${gr.meses[iMin].slice(0, 4)}</text>`;
+    if (iVuelve > 0 && iVuelve <= N) {
+      const anios = Math.round(iVuelve / 12);
+      document.getElementById("historia-texto").textContent =
+        `La historia real, mes a mes. Quien puso 10.000 en acciones en enero de 2000 estuvo por debajo de lo que había puesto durante unos ${anios} años, hasta ${gr.meses[iVuelve].slice(0, 4)}. Después le ganó por lejos a todo lo demás. La línea punteada es la inflación.`;
+    }
+  }
+  for (const i of [0, Math.round(N / 2), N])
+    svg += `<text x="${X(i)}" y="216" font-size="10" fill="${GRIS}" text-anchor="${i === 0 ? "start" : i === N ? "end" : "middle"}">${gr.meses[i].slice(0, 4)}</text>`;
+  document.getElementById("historia").innerHTML = svg;
+  document.getElementById("leyenda").innerHTML = leyenda(gr.series.map(s => s.grupo)) +
     `<span><i style="background:repeating-linear-gradient(90deg,${GRIS} 0 3px,transparent 3px 5px)"></i>Inflación</span>`;
-  document.querySelector(".sim").textContent = " " + datos.simbolo;
+  document.querySelectorAll(".sim").forEach(x => x.textContent = " " + datos.simbolo);
 }
 
 function pie() {
@@ -158,7 +210,7 @@ async function cargar(vista) {
     document.getElementById("grupos").innerHTML = `<div class="error">No pude cargar los datos (${esc(e.message)}). Probá recargar la página.</div>`;
     return;
   }
-  grupos(); grafico(); pie();
+  grupos(); embudo(); grafico(); pie();
 }
 
 document.getElementById("moneda").addEventListener("click", e => {

@@ -35,6 +35,11 @@ def pct_perdida(precios: pd.Series, anios: int) -> float | None:
     return float((r < 1).mean()) if len(r) else None
 
 
+def pct_perdida_real(precios: pd.Series, ipc: pd.Series, anios: int) -> float | None:
+    """Como pct_perdida, pero contra la inflación: terminaste con menos poder de compra del que pusiste."""
+    return pct_perdida(real(precios, ipc), anios)
+
+
 def escenarios(precios: pd.Series, ipc: pd.Series, anios: int, monto: float = MONTO) -> dict | None:
     """Peor, típico (mediana) y mejor valor final de `monto`, en moneda de hoy."""
     r = _ratios(real(precios, ipc), anios) * monto

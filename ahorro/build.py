@@ -11,6 +11,7 @@ import yaml
 from ahorro import fuentes, metricas, series
 
 PLAZOS = (1, 3, 5, 10)
+PLAZOS_EMBUDO = range(1, 16)
 NOTA_HOY = "Hoy la inflación está alta: esto protege la mayor parte de tu plata, no toda."
 
 
@@ -101,6 +102,10 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
         return {}, huecos or [f"[{clave}] IPC con huecos en los extremos"]
     infl = metricas.inflacion_interanual(ipc_r)
 
+    total = len(ipc_r) - 1
+    historia = {"meses": [str(m) for m in ipc_r.index],
+                "inflacion": metricas.inflacion_acumulada(ipc_r, meses=total), "series": []}
+    embudo = {"plazos": list(PLAZOS_EMBUDO), "series": []}
     grupos, grafico = [], {"meses": [str(m) for m in ipc_r.index[-121:]],
                            "inflacion": metricas.inflacion_acumulada(ipc_r), "series": []}
     for g in config["grupos"]:
@@ -124,12 +129,17 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
                                                      not any(i.get("grafico") for i in set_[g["id"]]))
                 if en_grafico:
                     grafico["series"].append({"grupo": g["id"], "valores": metricas.crecimiento(p)})
+                    historia["series"].append({"grupo": g["id"], "valores": metricas.crecimiento(p, meses=total)})
+                if inst.get("destacado") and g["id"] in ("med", "jub"):
+                    esc = [metricas.escenarios(p, ipc_r, a) for a in PLAZOS_EMBUDO]
+                    embudo["series"].append({"grupo": g["id"], **{k: [e[k] for e in esc] for k in ("peor", "tipico", "mejor")},
+                                             "pierde": [metricas.pct_perdida_real(p, ipc_r, a) for a in PLAZOS_EMBUDO]})
             out.append(d)
         grupos.append({**g, "instrumentos": out})
 
     return {"vista": clave, "moneda": moneda, "simbolo": v["simbolo"], "inflacion_nombre": v["inflacion_nombre"],
             "datos_al": str(ipc_r.index[-1]), "desde": config["desde"], "inflacion_interanual": infl,
-            "grupos": grupos, "grafico": grafico}, []
+            "grupos": grupos, "grafico": grafico, "historia": historia, "embudo": embudo}, []
 
 
 def _tickers_declarados(config: dict) -> dict[str, str]:
