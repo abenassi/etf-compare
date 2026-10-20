@@ -73,6 +73,9 @@ De arriba a abajo:
    completo. Arriba de todo va una barra corta: "Información educativa, no es asesoramiento financiero", con link al aviso.
    El rendimiento de cada instrumento se muestra nominal anual y, entre paréntesis, contra la inflación (pedido de Agustín
    el 2026-10-19).
+   El número grande se rotula "promedio por año de los últimos 10 años" y el bloque de hoy, "Con las tasas de hoy rinde".
+   En Liquidez, el número grande es la tasa de hoy y el promedio de 10 años queda como contexto, porque incluye años de
+   tasas en cero o negativas (decidido por Agustín el 2026-10-20).
 
 Lo que Agustín sacó del mockup y no vuelve: el recuadro de "10.000€ en el colchón desde 2020" y el selector "¿cuándo vas a
 necesitar la plata?" que resaltaba un grupo.

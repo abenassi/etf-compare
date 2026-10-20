@@ -52,27 +52,37 @@ function escenarios(inst, plazo, color, sc) {
   return fila("Peor", e.peor) + fila("Típico", e.tipico) + fila("Mejor", e.mejor);
 }
 
-function hoy(h, inst) {
+// En Liquidez lo que importa es la tasa de hoy: pasa a ser el número grande y el promedio de 10 años queda de contexto.
+const hoyPrincipal = (g, inst) => g.id === "liq" && inst.hoy && inst.rend_real_anual !== null;
+
+function hoy(h, inst, principal = false) {
   if (!h) return "";
   const cls = h.real < 0 ? "neg" : "pos";
-  const que = inst.sin_plazos ? `Si lo tenés hasta ${esc(inst.vence)}, rinde` : "Hoy rinde";
-  return `<div class="hoy">${que} <b>${pct(h.rinde)}</b> por año · ${esc(datos.inflacion_nombre)} ${pct(datos.inflacion_interanual)}
-    → <span class="${cls}">${pct(h.real, true)} real</span>
+  const que = inst.sin_plazos ? `Si lo tenés hasta ${esc(inst.vence)}, rinde` : "Con las tasas de hoy rinde";
+  const cifra = principal
+    ? `Con las tasas de hoy · ${esc(datos.inflacion_nombre)} hoy: ${pct(datos.inflacion_interanual)}`
+    : `${que} <b>${pct(h.rinde)}</b> por año · ${esc(datos.inflacion_nombre)} ${pct(datos.inflacion_interanual)}
+    → <span class="${cls}">${pct(h.real, true)} real</span>`;
+  return `<div class="hoy">${cifra}
     ${h.fuente ? `<span class="nota">Dato de referencia: ${esc(h.fuente)}, al ${esc(h.fecha)}.</span>` : `<span class="nota">Dato al ${esc(h.fecha)}.</span>`}
     ${h.nota ? `<span class="nota">${esc(h.nota)}</span>` : ""}</div>`;
 }
 
 function instrumento(g, inst, j) {
-  const r = inst.rend_real_anual, n = inst.rend_nominal_anual;
+  const principal = hoyPrincipal(g, inst);
+  const r = principal ? inst.hoy.real : inst.rend_real_anual, n = principal ? inst.hoy.rinde : inst.rend_nominal_anual;
+  const etiqueta = principal ? "por año con las tasas de hoy (entre paréntesis, contra la inflación)"
+    : "promedio por año de los últimos 10 años (entre paréntesis, contra la inflación)";
   const cabeza = `<div class="row"><span class="name">${esc(inst.nombre)}${inst.destacado ? "<em>recomendado</em>" : ""}</span>
       ${r === null ? "" : `<span class="real">${pct(n, true)} <span class="${r >= 0 ? "pos" : "neg"}">(${pct(r, true)})</span></span>`}</div>
-    <div class="row"><span class="tick">${esc(inst.detalle)}</span>${r === null ? "" : `<span class="sub">por año, últimos 10 años (entre paréntesis, contra la inflación)</span>`}</div>
+    <div class="row"><span class="tick">${esc(inst.detalle)}</span>${r === null ? "" : `<span class="sub">${etiqueta}</span>`}</div>
+    ${principal ? `<div class="sub">Promedio de los últimos 10 años: ${pct(inst.rend_nominal_anual, true)} (${pct(inst.rend_real_anual, true)}), más bajo porque entre 2016 y 2022 las tasas estuvieron en cero o negativas.</div>` : ""}
     ${!inst.sin_plazos && inst.real_desde && inst.real_desde > datos.desde ? `<div class="sub">Dato real del fondo desde ${esc(inst.real_desde.slice(0, 4))}; antes, ${esc(inst.antes)}.</div>` : ""}`;
   if (inst.sin_plazos) {
     return `<div class="inst" style="cursor:default">${cabeza}${hoy(inst.hoy, inst)}
       <div class="nota">Es un bono con fecha de vencimiento: si lo tenés hasta ${esc(inst.vence)}, sabés casi exacto cuánto te da.</div></div>`;
   }
-  return `<div class="inst" data-g="${g.id}" data-j="${j}">${cabeza}${hoy(inst.hoy, inst)}
+  return `<div class="inst" data-g="${g.id}" data-j="${j}">${cabeza}${hoy(inst.hoy, inst, principal)}
     <table class="chances"><tr><th>Si lo tenías…</th>${PLAZOS.map(p => `<th>${p} ${p === "1" ? "año" : "años"}</th>`).join("")}</tr>
       <tr><th style="text-align:left">perdiste plata</th>${PLAZOS.map(p => celda(inst.perdida[p])).join("")}</tr></table>
     <div class="tap">Tocá para ver qué pasaba con 10.000 ${esc(datos.simbolo)} ▾</div>
