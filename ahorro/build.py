@@ -12,7 +12,6 @@ from ahorro import fuentes, metricas, series
 
 PLAZOS = (1, 3, 5, 10)
 PLAZOS_EMBUDO = range(1, 16)
-NOTA_HOY = "Hoy la inflación está alta: esto protege la mayor parte de tu plata, no toda."
 
 
 def _tasa(config: dict, set_: str, obtener: Callable[[str], pd.Series]) -> pd.Series:
@@ -46,7 +45,7 @@ def _serie_etf(inst: dict, moneda: str, fx: pd.Series, config: dict, obtener) ->
     return real
 
 
-def _hoy(inst: dict, tasa: pd.Series, cuenta_cfg: dict, infl: float) -> dict | None:
+def _hoy(inst: dict, tasa: pd.Series, cuenta_cfg: dict) -> dict | None:
     h = inst.get("hoy")
     if inst.get("tipo") == "cuenta":
         rinde, fecha = max(tasa.iloc[-1] - cuenta_cfg["spread"], cuenta_cfg["piso"]) / 100, str(tasa.index[-1])
@@ -56,9 +55,7 @@ def _hoy(inst: dict, tasa: pd.Series, cuenta_cfg: dict, infl: float) -> dict | N
         rinde, fecha = h["ytm"], h["fecha"]
     else:
         return None
-    real = (1 + rinde) / (1 + infl) - 1
-    return {"rinde": rinde, "fecha": fecha, "real": real, "nota": NOTA_HOY if real < 0 else None,
-            "fuente": (h or {}).get("fuente")}
+    return {"rinde": rinde, "fecha": fecha, "fuente": (h or {}).get("fuente")}
 
 
 def _publico(inst: dict) -> dict:
@@ -73,9 +70,8 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
     fx = obtener(config["fx"])
     tasa = _tasa(config, v["set"], obtener)
     cuenta = config["cuenta"]
-    ipc = obtener(v["ipc"]).dropna()
 
-    errores, crudas, aparte = [], {"__ipc__": ipc}, {}
+    errores, crudas, aparte = [], {}, {}
     for gid, insts in set_.items():
         for j, inst in enumerate(insts):
             k = f"{gid}:{j}"
@@ -93,53 +89,44 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
         return {}, [f"[{clave}] {e}" for e in errores]
 
     rec = series.recortar(crudas, config["desde"])
-    ipc_r, avisos = series.completar_ipc(rec.pop("__ipc__"))
-    for a in avisos:
-        print(f"AVISO: [{clave}] {a}", file=sys.stderr)
     nombres = {f"{g}:{j}": i.get("yahoo") or i["nombre"] for g, insts in set_.items() for j, i in enumerate(insts)}
     huecos = [f"[{clave}] {nombres[k]}: mes vacío en {m}" for k, s in rec.items() for m in s.index[s.isna()]]
-    if huecos or ipc_r.isna().any():
-        return {}, huecos or [f"[{clave}] IPC con huecos en los extremos"]
-    infl = metricas.inflacion_interanual(ipc_r)
+    if huecos:
+        return {}, huecos
 
-    total = len(ipc_r) - 1
-    historia = {"meses": [str(m) for m in ipc_r.index],
-                "inflacion": metricas.inflacion_acumulada(ipc_r, meses=total), "series": []}
+    meses = next(iter(rec.values())).index
+    total = len(meses) - 1
+    historia = {"meses": [str(m) for m in meses], "series": []}
     embudo = {"plazos": list(PLAZOS_EMBUDO), "series": []}
-    grupos, grafico = [], {"meses": [str(m) for m in ipc_r.index[-121:]],
-                           "inflacion": metricas.inflacion_acumulada(ipc_r), "series": []}
+    grupos = []
     for g in config["grupos"]:
         out = []
         for j, inst in enumerate(set_[g["id"]]):
             k = f"{g['id']}:{j}"
             d = _publico(inst)
-            d["hoy"] = _hoy(inst, tasa, cuenta, infl)
+            d["hoy"] = _hoy(inst, tasa, cuenta)
             if k in aparte:
-                d |= {"real_desde": str(aparte[k].index[0]), "rend_real_anual": None, "rend_nominal_anual": None,
-                      "perdida": None, "escenarios": None}
+                d |= {"real_desde": str(aparte[k].index[0]), "rend_anual": None, "perdida": None, "escenarios": None}
             else:
                 p = rec[k]
                 d |= {"real_desde": None if inst.get("tipo") == "cuenta" else
                       str(obtener(f"yahoo:{inst['yahoo']}").dropna().index[0]),
-                      "rend_real_anual": metricas.rendimiento_real_anual(p, ipc_r),
-                      "rend_nominal_anual": metricas.rendimiento_nominal_anual(p),
+                      "rend_anual": metricas.rendimiento_nominal_anual(p),
                       "perdida": {str(a): metricas.pct_perdida(p, a) for a in PLAZOS},
-                      "escenarios": {str(a): metricas.escenarios(p, ipc_r, a) for a in PLAZOS}}
+                      "escenarios": {str(a): metricas.escenarios(p, a) for a in PLAZOS}}
                 en_grafico = inst.get("grafico") or (inst.get("destacado") and
                                                      not any(i.get("grafico") for i in set_[g["id"]]))
                 if en_grafico:
-                    grafico["series"].append({"grupo": g["id"], "valores": metricas.crecimiento(p)})
                     historia["series"].append({"grupo": g["id"], "valores": metricas.crecimiento(p, meses=total)})
                 if inst.get("destacado") and g["id"] in ("med", "jub"):
-                    esc = [metricas.escenarios(p, ipc_r, a) for a in PLAZOS_EMBUDO]
-                    embudo["series"].append({"grupo": g["id"], **{k: [e[k] for e in esc] for k in ("peor", "tipico", "mejor")},
-                                             "pierde": [metricas.pct_perdida_real(p, ipc_r, a) for a in PLAZOS_EMBUDO]})
+                    esc = [metricas.escenarios(p, a) for a in PLAZOS_EMBUDO]
+                    embudo["series"].append({"grupo": g["id"], **{c: [e[c] for e in esc] for c in ("peor", "tipico", "mejor")},
+                                             "pierde": [metricas.pct_perdida(p, a) for a in PLAZOS_EMBUDO]})
             out.append(d)
         grupos.append({**g, "instrumentos": out})
 
-    return {"vista": clave, "moneda": moneda, "simbolo": v["simbolo"], "inflacion_nombre": v["inflacion_nombre"],
-            "datos_al": str(ipc_r.index[-1]), "desde": config["desde"], "inflacion_interanual": infl,
-            "grupos": grupos, "grafico": grafico, "historia": historia, "embudo": embudo}, []
+    return {"vista": clave, "moneda": moneda, "simbolo": v["simbolo"], "datos_al": str(meses[-1]),
+            "desde": config["desde"], "grupos": grupos, "historia": historia, "embudo": embudo}, []
 
 
 def _tickers_declarados(config: dict) -> dict[str, str]:
@@ -186,7 +173,7 @@ def construir(config: dict, obtener: Callable[[str], pd.Series],
 
 def _obtener_real() -> Callable[[str], pd.Series]:
     cache: dict[str, pd.Series] = {}
-    bajadores = {"yahoo": fuentes.bajar_yahoo, "hicp": fuentes.bajar_hicp,
+    bajadores = {"yahoo": fuentes.bajar_yahoo,
                  "fred": fuentes.bajar_fred, "bce": fuentes.bajar_bce, "bbk": fuentes.bajar_bbk}
 
     def obtener(nombre: str) -> pd.Series:
@@ -211,7 +198,7 @@ def main() -> int:
     dir_.mkdir(parents=True, exist_ok=True)
     for clave, vista in salida.items():
         (dir_ / f"{clave}.json").write_text(json.dumps(vista, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"OK: datos al {salida['es']['datos_al']} en {', '.join(salida)}")
+    print(f"OK: datos al {salida['eur']['datos_al']} en {', '.join(salida)}")
     return 0
 
 

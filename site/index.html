@@ -14,16 +14,15 @@
   <h1>¿Dónde pongo mis ahorros?</h1>
   <p>Una guía corta para elegir según <b>cuándo vas a necesitar la plata</b>.</p>
   <div class="moneda" id="moneda">
-    <button class="chip" data-m="es">🇪🇸 Euro · inflación España</button>
-    <button class="chip" data-m="ea">🇪🇺 Euro · zona euro</button>
-    <button class="chip" data-m="us">🇺🇸 Dólar</button>
+    <button class="chip" data-m="eur">🇪🇺 Euros</button>
+    <button class="chip" data-m="usd">🇺🇸 Dólares</button>
   </div>
 
   <div id="grupos"></div>
 
   <div class="leccion">
     <h3 style="margin:0 0 4px">¿Por qué el plazo importa?</h3>
-    <p>Si ponías 10.000<span class="sim"></span> en algún mes desde 2000, esto es lo que tenías después de 1 a 15 años, en plata de hoy. La banda va de lo peor a lo mejor que pasó; la línea es el resultado típico. Con las acciones, a pocos años podías perder casi la mitad; cuanto más tiempo, más subía lo típico y menos veces perdías.</p>
+    <p>Si ponías 10.000<span class="sim"></span> en algún mes desde 2000, esto es lo que tenías después de 1 a 15 años. La banda va de lo peor a lo mejor que pasó; la línea es el resultado típico. Con las acciones, a pocos años podías perder casi la mitad; cuanto más tiempo, más subía lo típico y menos veces perdías.</p>
     <svg id="embudo" viewBox="0 0 340 230" role="img" aria-label="Resultado de 10.000 según cuántos años los tuviste, acciones y bonos"></svg>
     <div class="legend" id="leyenda-embudo" style="flex-wrap:wrap"></div>
     <table class="chances" id="pierde"></table>
@@ -31,7 +30,7 @@
 
   <div class="leccion">
     <h3 style="margin:0 0 4px">10.000<span class="sim"></span> invertidos en enero de 2000</h3>
-    <p id="historia-texto">La historia real, mes a mes. La línea punteada es la inflación: lo que necesitabas para no perder poder de compra.</p>
+    <p id="historia-texto">La historia real, mes a mes.</p>
     <svg id="historia" viewBox="0 0 340 220" role="img" aria-label="Evolución de 10.000 en cada grupo desde enero de 2000"></svg>
     <div class="legend" id="leyenda" style="flex-wrap:wrap"></div>
   </div>

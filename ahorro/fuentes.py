@@ -42,16 +42,6 @@ def moneda_yahoo(ticker: str) -> str | None:
         return None
 
 
-def bajar_hicp(geo: str) -> pd.Series:
-    url = ("https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/prc_hicp_minr"
-           f"?geo={geo}&coicop18=TOTAL&unit=I15&format=JSON")
-    d = requests.get(url, timeout=TIMEOUT).json()
-    tiempos = d["dimension"]["time"]["category"]["index"]
-    por_pos = {pos: mes for mes, pos in tiempos.items()}
-    vals = {por_pos[int(k)]: v for k, v in d["value"].items()}
-    s = pd.Series(vals, dtype=float)
-    s.index = pd.PeriodIndex(s.index, freq="M")
-    return s.sort_index()
 
 
 def bajar_fred(serie_id: str) -> pd.Series:

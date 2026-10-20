@@ -3,6 +3,13 @@
 Fecha: 2026-10-19. Repo: `abenassi/etf-compare` (se reusa; el código viejo de Streamlit se borra entero).
 Mockup de referencia, con números inventados: [`docs/mockup/index.html`](../../mockup/index.html).
 
+## Cambio del 2026-10-20: sin inflación
+
+Agustín pidió **sacar todo el tratamiento de la inflación** porque confundía a su hermana. Ahora hay dos vistas, **euros**
+y **dólares** (`?pais=eur|usd`; los links viejos `es`, `ea` y `us` siguen funcionando). Cada activo se convierte a la
+moneda de la vista y todo se muestra en términos nominales: rendimiento anual, "perdiste plata", escenarios y embudo.
+Ya no se bajan series de IPC. Donde este documento menciona la inflación, quedó desactualizado; manda este párrafo.
+
 ## Intención
 
 A Agustín le preguntan seguido en qué invertir; el disparador fue su hermana en Barcelona, con un horizonte de 1 a 4 años

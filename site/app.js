@@ -1,5 +1,6 @@
 // Renderiza la página a partir de data/{vista}.json (lo genera ahorro/build.py).
-const VISTAS = ["es", "ea", "us"];
+const VISTAS = ["eur", "usd"];
+const ALIAS = { es: "eur", ea: "eur", us: "usd" }; // links viejos con ?pais=es|ea|us
 const COLOR = { liq: "#1baf7a", med: "#2a78d6", jub: "#eb6834" };
 const GRIS = "#8a8983";
 const PLAZOS = ["1", "3", "5", "10"];
@@ -16,7 +17,8 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "
 
 function vistaDeUrl() {
   const p = new URLSearchParams(location.search).get("pais");
-  return VISTAS.includes(p) ? p : "es";
+  const v = ALIAS[p] || p;
+  return VISTAS.includes(v) ? v : "eur";
 }
 
 // Celda "perdiste plata": un solo tono, más oscuro = más veces perdiste.
@@ -53,30 +55,24 @@ function escenarios(inst, plazo, color, sc) {
 }
 
 // En Liquidez lo que importa es la tasa de hoy: pasa a ser el número grande y el promedio de 10 años queda de contexto.
-const hoyPrincipal = (g, inst) => g.id === "liq" && inst.hoy && inst.rend_real_anual !== null;
+const hoyPrincipal = (g, inst) => g.id === "liq" && inst.hoy && inst.rend_anual !== null;
 
 function hoy(h, inst, principal = false) {
   if (!h) return "";
-  const cls = h.real < 0 ? "neg" : "pos";
   const que = inst.sin_plazos ? `Si lo tenés hasta ${esc(inst.vence)}, rinde` : "Con las tasas de hoy rinde";
-  const cifra = principal
-    ? `Con las tasas de hoy · ${esc(datos.inflacion_nombre)} hoy: ${pct(datos.inflacion_interanual)}`
-    : `${que} <b>${pct(h.rinde)}</b> por año · ${esc(datos.inflacion_nombre)} ${pct(datos.inflacion_interanual)}
-    → <span class="${cls}">${pct(h.real, true)} real</span>`;
-  return `<div class="hoy">${cifra}
-    ${h.fuente ? `<span class="nota">Dato de referencia: ${esc(h.fuente)}, al ${esc(h.fecha)}.</span>` : `<span class="nota">Dato al ${esc(h.fecha)}.</span>`}
-    ${h.nota ? `<span class="nota">${esc(h.nota)}</span>` : ""}</div>`;
+  const fuente = h.fuente ? `Dato de referencia: ${esc(h.fuente)}, al ${esc(h.fecha)}.` : `Dato al ${esc(h.fecha)}.`;
+  if (principal) return `<div class="hoy"><span class="nota" style="margin-top:0">${fuente}</span></div>`;
+  return `<div class="hoy">${que} <b>${pct(h.rinde)}</b> por año.<span class="nota">${fuente}</span></div>`;
 }
 
 function instrumento(g, inst, j) {
   const principal = hoyPrincipal(g, inst);
-  const r = principal ? inst.hoy.real : inst.rend_real_anual, n = principal ? inst.hoy.rinde : inst.rend_nominal_anual;
-  const etiqueta = principal ? "por año con las tasas de hoy (entre paréntesis, contra la inflación)"
-    : "promedio por año de los últimos 10 años (entre paréntesis, contra la inflación)";
+  const n = principal ? inst.hoy.rinde : inst.rend_anual;
+  const etiqueta = principal ? "por año, con las tasas de hoy" : "promedio por año de los últimos 10 años";
   const cabeza = `<div class="row"><span class="name">${esc(inst.nombre)}${inst.destacado ? "<em>recomendado</em>" : ""}</span>
-      ${r === null ? "" : `<span class="real">${pct(n, true)} <span class="${r >= 0 ? "pos" : "neg"}">(${pct(r, true)})</span></span>`}</div>
-    <div class="row"><span class="tick">${esc(inst.detalle)}</span>${r === null ? "" : `<span class="sub">${etiqueta}</span>`}</div>
-    ${principal ? `<div class="sub">Promedio de los últimos 10 años: ${pct(inst.rend_nominal_anual, true)} (${pct(inst.rend_real_anual, true)}), más bajo porque entre 2016 y 2022 las tasas estuvieron en cero o negativas.</div>` : ""}
+      ${n === null ? "" : `<span class="real ${n >= 0 ? "pos" : "neg"}">${pct(n, true)}</span>`}</div>
+    <div class="row"><span class="tick">${esc(inst.detalle)}</span>${n === null ? "" : `<span class="sub">${etiqueta}</span>`}</div>
+    ${principal ? `<div class="sub">Promedio de los últimos 10 años: ${pct(inst.rend_anual, true)}, más bajo porque entre 2016 y 2022 las tasas estuvieron en cero o negativas.</div>` : ""}
     ${!inst.sin_plazos && inst.real_desde && inst.real_desde > datos.desde ? `<div class="sub">Dato real del fondo desde ${esc(inst.real_desde.slice(0, 4))}; antes, ${esc(inst.antes)}.</div>` : ""}`;
   if (inst.sin_plazos) {
     return `<div class="inst" style="cursor:default">${cabeza}${hoy(inst.hoy, inst)}
@@ -90,7 +86,7 @@ function instrumento(g, inst, j) {
       <b style="font-size:14px">Si ponías 10.000 ${esc(datos.simbolo)} y los sacabas a los…</b>
       <div class="plazos">${PLAZOS.map(p => `<button class="chip ${p === "3" ? "on" : ""}" data-p="${p}">${p} ${p === "1" ? "año" : "años"}</button>`).join("")}</div>
       <div class="escs">${escenarios(inst, "3", COLOR[g.id], escala("3"))}</div>
-      <div class="nota">En plata de hoy (ya descontada la inflación). La raya negra marca los 10.000 que pusiste; la escala es la misma para todos los instrumentos. Peor y mejor son lo peor y lo mejor que pasó desde ${mes(datos.desde)}.</div>
+      <div class="nota">En ${datos.moneda === "EUR" ? "euros" : "dólares"}. La raya negra marca los 10.000 que pusiste; la escala es la misma para todos los instrumentos. Peor y mejor son lo peor y lo mejor que pasó desde ${mes(datos.desde)}.</div>
     </div></div>`;
 }
 
@@ -139,14 +135,14 @@ function embudo() {
     `<span>banda: de lo peor a lo mejor</span>`;
   const cols = [0, 2, 4, 9, 14].filter(i => i <= n);
   document.getElementById("pierde").innerHTML =
-    `<tr><th style="text-align:left">Perdiste contra la inflación…</th>${cols.map(i => `<th>${P[i]} ${P[i] === 1 ? "año" : "años"}</th>`).join("")}</tr>` +
+    `<tr><th style="text-align:left">Perdiste plata…</th>${cols.map(i => `<th>${P[i]} ${P[i] === 1 ? "año" : "años"}</th>`).join("")}</tr>` +
     e.series.map(s => `<tr><th style="text-align:left">${esc(nombreGrupo(s.grupo))}</th>${cols.map(i => celda(s.pierde[i])).join("")}</tr>`).join("");
 }
 
 // Historia real desde el primer mes de datos.
 function grafico() {
   const gr = datos.historia, N = gr.meses.length - 1;
-  const todas = gr.series.flatMap(s => s.valores).concat(gr.inflacion);
+  const todas = gr.series.flatMap(s => s.valores);
   const lo = Math.min(...todas) * 0.92, hi = Math.max(...todas) * 1.04;
   const X = i => 34 + i / N * 196, Y = v => 200 - (v - lo) / (hi - lo) * 185;
   const camino = d => d.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
@@ -155,11 +151,10 @@ function grafico() {
   for (let t = Math.ceil(lo / paso) * paso; t < hi; t += paso)
     svg += `<line x1="34" x2="230" y1="${Y(t)}" y2="${Y(t)}" stroke="#e6e5e0"/><text x="0" y="${Y(t) + 3}" font-size="10" fill="${GRIS}">${k(t)}</text>`;
   svg += `<line x1="34" x2="230" y1="${Y(10000)}" y2="${Y(10000)}" stroke="#0b0b0b" stroke-width="1" stroke-dasharray="2 3"/>`;
-  svg += `<path d="${camino(gr.inflacion)}" fill="none" stroke="${GRIS}" stroke-width="1.5" stroke-dasharray="4 3"/>`;
   for (const s of gr.series)
     svg += `<path d="${camino(s.valores)}" fill="none" stroke="${COLOR[s.grupo]}" stroke-width="1.8" stroke-linejoin="round"/>`;
   const finales = gr.series.map(s => ({ v: s.valores[N], t: nombreGrupo(s.grupo) }))
-    .concat([{ v: gr.inflacion[N], t: "Inflación" }]).sort((a, b) => a.v - b.v);
+    .sort((a, b) => a.v - b.v);
   let prev = 999; // de abajo hacia arriba, separadas para que no se pisen
   for (const f of finales) {
     const y = Math.min(Y(f.v) + 3, prev - 12); prev = y;
@@ -175,14 +170,13 @@ function grafico() {
     if (iVuelve > 0 && iVuelve <= N) {
       const anios = Math.round(iVuelve / 12);
       document.getElementById("historia-texto").textContent =
-        `La historia real, mes a mes. Quien puso 10.000 en acciones en enero de 2000 estuvo por debajo de lo que había puesto durante unos ${anios} años, hasta ${gr.meses[iVuelve].slice(0, 4)}. Después le ganó por lejos a todo lo demás. La línea punteada es la inflación.`;
+        `La historia real, mes a mes. Quien puso 10.000 en acciones en enero de 2000 estuvo por debajo de lo que había puesto durante unos ${anios} años, hasta ${gr.meses[iVuelve].slice(0, 4)}. Después le ganó por lejos a todo lo demás.`;
     }
   }
   for (const i of [0, Math.round(N / 2), N])
     svg += `<text x="${X(i)}" y="216" font-size="10" fill="${GRIS}" text-anchor="${i === 0 ? "start" : i === N ? "end" : "middle"}">${gr.meses[i].slice(0, 4)}</text>`;
   document.getElementById("historia").innerHTML = svg;
-  document.getElementById("leyenda").innerHTML = leyenda(gr.series.map(s => s.grupo)) +
-    `<span><i style="background:repeating-linear-gradient(90deg,${GRIS} 0 3px,transparent 3px 5px)"></i>Inflación</span>`;
+  document.getElementById("leyenda").innerHTML = leyenda(gr.series.map(s => s.grupo));
   document.querySelectorAll(".sim").forEach(x => x.textContent = " " + datos.simbolo);
 }
 

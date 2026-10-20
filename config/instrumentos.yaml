@@ -1,5 +1,5 @@
 # Qué muestra la página. Cambiar un ETF = editar este archivo.
-# Fuentes: "yahoo:<ticker>", "hicp:<geo>", "fred:<id>", "bce:<FLUJO/clave>".
+# Fuentes: "yahoo:<ticker>", "fred:<id>", "bce:<FLUJO/clave>", "bbk:<clave Bundesbank>".
 # Proxies (se encadenan en orden, cada uno completa la historia anterior del previo):
 #   {yahoo: X, moneda_cotiza, ter_diff}                         otro fondo o índice
 #   {mezcla: [{yahoo: X, peso: 0.6}, ...], moneda_cotiza, ter_diff}  cartera con rebalanceo mensual
@@ -19,9 +19,8 @@ tasas:
   usd: ["fred:TB3MS"]
 
 vistas:
-  es: {moneda: EUR, simbolo: "€", ipc: "hicp:ES", inflacion_nombre: "inflación de España", set: eur}
-  ea: {moneda: EUR, simbolo: "€", ipc: "hicp:EA", inflacion_nombre: "inflación de la zona euro", set: eur}
-  us: {moneda: USD, simbolo: "US$", ipc: "fred:CPIAUCSL", inflacion_nombre: "inflación de EE.UU.", set: usd}
+  eur: {moneda: EUR, simbolo: "€", set: eur}
+  usd: {moneda: USD, simbolo: "US$", set: usd}
 
 grupos:
   - id: liq
@@ -31,7 +30,7 @@ grupos:
   - id: med
     tag: Mediano plazo
     titulo: Ahorro para un objetivo
-    para: Para algo que vas a comprar en 1 a 5 años, como un depto. Busca perder lo menos posible contra la inflación, sin sustos grandes.
+    para: Para algo que vas a comprar en 1 a 5 años, como un depto. Rinde algo más que una cuenta, sin sustos grandes.
   - id: jub
     tag: Jubilación
     titulo: Ahorro de largo plazo

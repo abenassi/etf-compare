@@ -6,7 +6,7 @@ Página estática, pensada para el celular, que ayuda a elegir dónde poner los 
 - mediano plazo (1 a 5 años);
 - jubilación.
 
-Compara cada ETF contra la inflación de España, de la zona euro o de EE.UU.
+Muestra cada ETF en euros o en dólares, convertido a la moneda elegida.
 
 - Diseño: `docs/superpowers/specs/2026-10-19-ahorro-design.md`
 - Plan: `docs/superpowers/plans/2026-10-19-ahorro.md`
@@ -21,7 +21,7 @@ uv run python -m ahorro.build
 
 ## Dónde está
 
-https://abenassi.github.io/etf-compare/. Se puede preseleccionar la vista con `?pais=es`, `?pais=ea` o `?pais=us`.
+https://abenassi.github.io/etf-compare/. Se puede preseleccionar la vista con `?pais=eur` o `?pais=usd`.
 
 La Action `actualizar.yml` corre el día 20 de cada mes (también se puede disparar a mano desde Actions):
 

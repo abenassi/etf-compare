@@ -1,3 +1,5 @@
+import json
+
 import pandas as pd
 import pytest
 import yaml
@@ -31,26 +33,29 @@ def instrumentos(vista):
     return [i for g in vista["grupos"] for i in g["instrumentos"]]
 
 
-def test_build_produce_las_tres_vistas(config):
+def test_build_produce_vistas_euro_y_dolar(config):
     out = build.construir(config, obtener_falso)
-    assert set(out) == {"es", "ea", "us"}
-    g = out["es"]["grupos"]
+    assert set(out) == {"eur", "usd"}
+    assert out["eur"]["moneda"] == "EUR" and out["usd"]["moneda"] == "USD"
+    g = out["eur"]["grupos"]
     assert [x["id"] for x in g] == ["liq", "med", "jub"]
     assert all(sum(bool(i["destacado"]) for i in x["instrumentos"]) == 1 for x in g)
-    assert out["es"]["desde"] == "2000-01"
-    assert out["us"]["moneda"] == "USD"
-    assert len(out["es"]["grafico"]["meses"]) == 121
-    assert len(out["es"]["grafico"]["inflacion"]) == 121
-    assert [s["grupo"] for s in out["es"]["grafico"]["series"]] == ["liq", "med", "jub"]
+    assert out["eur"]["desde"] == "2000-01"
+
+
+def test_json_no_menciona_inflacion(config):
+    out = build.construir(config, obtener_falso)
+    texto = json.dumps(out, ensure_ascii=False).lower()
+    assert "infl" not in texto and "real_anual" not in texto
 
 
 def test_build_recorta_al_ultimo_mes_comun(config):
     def corto(n):
         s = obtener_falso(n)
-        return s.iloc[:-3] if n.startswith("hicp:") else s
+        return s.iloc[:-3] if n == "yahoo:VT" else s
 
     out = build.construir(config, corto)
-    assert out["es"]["datos_al"] == str(plano().index[-4])
+    assert out["usd"]["datos_al"] == str(plano().index[-4])
 
 
 def test_build_falla_si_serie_invalida(config):
@@ -65,42 +70,6 @@ def test_build_falla_si_serie_invalida(config):
         build.construir(config, roto)
 
 
-def test_ivoa_sin_plazos(config):
-    ivoa = [i for i in instrumentos(build.construir(config, obtener_falso)["es"]) if i.get("sin_plazos")]
-    assert ivoa and ivoa[0]["hoy"]["rinde"] == pytest.approx(0.0369)
-    assert ivoa[0]["perdida"] is None and ivoa[0]["escenarios"] is None
-
-
-def test_cuenta_remunerada_no_pierde_y_tiene_hoy(config):
-    cuenta = instrumentos(build.construir(config, obtener_falso)["es"])[0]
-    assert cuenta["nombre"] == "Cuenta remunerada"
-    assert all(v == 0.0 for v in cuenta["perdida"].values())
-    assert cuenta["hoy"]["rinde"] == pytest.approx(0.015)  # 2% - 0,5
-
-
-def test_hoy_real_y_nota_cuando_pierde_contra_inflacion(config):
-    def inflacion_alta(n):
-        if n.startswith("hicp:"):
-            return plano(r=0.004)  # ~4,9% anual > 3,96% de XZE5
-        return obtener_falso(n)
-
-    xze5 = instrumentos(build.construir(config, inflacion_alta)["es"])[2]
-    assert xze5["hoy"]["real"] < 0 and xze5["hoy"]["nota"]
-
-
-def test_build_ipc_con_mes_faltante(config):
-    def con_hueco(n):
-        s = obtener_falso(n)
-        if n == "fred:CPIAUCSL":
-            s = s.drop(s.index[-8])  # como octubre de 2025, que BLS no publicó
-        return s
-
-    us = build.construir(config, con_hueco)["us"]
-    assert us["inflacion_interanual"] == pytest.approx(1.003 ** 12 - 1)
-    meses = pd.PeriodIndex(us["grafico"]["meses"], freq="M")
-    assert len(meses) == 121 and (meses[1:] - meses[:-1] == meses.freq).all()
-
-
 def test_build_falla_si_etf_tiene_un_mes_faltante(config):
     def con_hueco(n):
         s = obtener_falso(n)
@@ -110,19 +79,27 @@ def test_build_falla_si_etf_tiene_un_mes_faltante(config):
         build.construir(config, con_hueco)
 
 
+def test_ivoa_sin_plazos(config):
+    ivoa = [i for i in instrumentos(build.construir(config, obtener_falso)["eur"]) if i.get("sin_plazos")]
+    assert ivoa and ivoa[0]["hoy"]["rinde"] == pytest.approx(0.0369)
+    assert ivoa[0]["perdida"] is None and ivoa[0]["escenarios"] is None
+
+
+def test_cuenta_remunerada_no_pierde_y_tiene_hoy(config):
+    cuenta = instrumentos(build.construir(config, obtener_falso)["eur"])[0]
+    assert cuenta["nombre"] == "Cuenta remunerada"
+    assert all(v == 0.0 for v in cuenta["perdida"].values())
+    assert cuenta["hoy"]["rinde"] == pytest.approx(0.015)  # 2% - 0,5
+    assert set(cuenta["hoy"]) == {"rinde", "fecha", "fuente"}
+
+
 def test_build_incluye_rendimiento_nominal(config):
-    vwce = instrumentos(build.construir(config, obtener_falso)["es"])[5]
-    assert vwce["rend_nominal_anual"] == pytest.approx(1.003 ** 12 - 1)
-
-
-def test_grafico_liquidez_usa_el_fondo_monetario(config):
-    graf = build.construir(config, obtener_falso)["es"]["grafico"]
-    liq = next(x for x in graf["series"] if x["grupo"] == "liq")
-    assert liq["valores"][-1] == pytest.approx(10000 * 1.003 ** 120)  # XEON (plano), no la cuenta al 1,5%
+    vwce = instrumentos(build.construir(config, obtener_falso)["eur"])[5]
+    assert vwce["rend_anual"] == pytest.approx(1.003 ** 12 - 1)
 
 
 def test_instrumento_con_proxy_dice_que_hay_antes(config):
-    xze5 = instrumentos(build.construir(config, obtener_falso)["es"])[2]
+    xze5 = instrumentos(build.construir(config, obtener_falso)["eur"])[2]
     assert "alemán" in xze5["antes"]
 
 
@@ -138,8 +115,7 @@ def test_activo_en_dolares_se_convierte_a_euros(config):
             return plano(r=0.0).loc["2019-07":]
         return obtener_falso(n)
 
-    es = build.construir(config, euro_fuerte)["es"]
-    vwce = instrumentos(es)[5]
+    vwce = instrumentos(build.construir(config, euro_fuerte)["eur"])[5]
     assert vwce["nombre"] == "Acciones de todo el mundo"
     assert vwce["perdida"]["10"] == 1.0  # antes de 2019 viene de proxies en USD: en euros siempre perdió
 
@@ -151,13 +127,15 @@ def test_build_falla_si_la_moneda_declarada_no_coincide(config):
 
 def test_build_acepta_monedas_correctas(config):
     reales = {"CSPX.AS": "EUR", "CNDX.AS": "EUR"}
+
     def moneda_de(t):
         return reales.get(t, "EUR" if t.endswith(".DE") else "USD")
+
     assert build.construir(config, obtener_falso, moneda_de=moneda_de)
 
 
 def test_build_embudo_por_plazo(config):
-    emb = build.construir(config, obtener_falso)["es"]["embudo"]
+    emb = build.construir(config, obtener_falso)["eur"]["embudo"]
     assert emb["plazos"] == list(range(1, 16))
     assert [s["grupo"] for s in emb["series"]] == ["med", "jub"]
     jub = emb["series"][1]
@@ -167,9 +145,15 @@ def test_build_embudo_por_plazo(config):
 
 
 def test_build_historia_desde_el_inicio(config):
-    out = build.construir(config, obtener_falso)["es"]
+    out = build.construir(config, obtener_falso)["eur"]
     h = out["historia"]
     assert h["meses"][0] == "2000-01" and h["meses"][-1] == out["datos_al"]
-    assert len(h["inflacion"]) == len(h["meses"])
     assert [s["grupo"] for s in h["series"]] == ["liq", "med", "jub"]
     assert all(len(s["valores"]) == len(h["meses"]) and s["valores"][0] == pytest.approx(10000) for s in h["series"])
+
+
+def test_historia_liquidez_usa_el_fondo_monetario(config):
+    h = build.construir(config, obtener_falso)["eur"]["historia"]
+    liq = next(x for x in h["series"] if x["grupo"] == "liq")
+    meses = len(h["meses"]) - 1
+    assert liq["valores"][-1] == pytest.approx(10000 * 1.003 ** meses)  # XEON (plano), no la cuenta al 1,5%
