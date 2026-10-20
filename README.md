@@ -39,5 +39,8 @@ Si alguna serie tiene un salto raro, la Action falla y no se publica nada; queda
 - **Rendimiento al vencimiento de los bonos** (el número de "Hoy"): se carga a mano en `hoy.ytm` y `hoy.fecha` de cada
   bono. Se saca de la ficha del emisor (iShares: "Weighted Average YTM"; Vanguard: "Yield to maturity"). Conviene
   revisarlo cada 2 o 3 meses. La página muestra la fecha del dato.
+- **Tabla de bonos con vencimiento (iBonds):** en `config/instrumentos.yaml`, el ítem `tipo: escalera` tiene un `ytm`
+  por año (el "Weighted Average YTM" bruto de cada ficha de iShares) y una `fecha`. Se actualiza a mano junto con los
+  demás. Cuando un año vence, se saca de la lista y se agrega el siguiente.
 - La cuenta remunerada se modela con €STR (o la letra del Tesoro a 3 meses en la vista dólar) menos 0,5 puntos, con piso
   de 0%. Los parámetros están en `cuenta:` de la configuración.

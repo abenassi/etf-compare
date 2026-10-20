@@ -78,6 +78,8 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
             if inst.get("tipo") == "cuenta":
                 crudas[k] = series.cuenta_modelada(tasa, cuenta["spread"], cuenta["piso"])
                 continue
+            if inst.get("tipo") == "escalera":
+                continue
             s = _serie_etf(inst, moneda, fx, config, obtener)
             if inst.get("sin_plazos"):
                 aparte[k] = s
@@ -105,7 +107,13 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
             k = f"{g['id']}:{j}"
             d = _publico(inst)
             d["hoy"] = _hoy(inst, tasa, cuenta)
-            if k in aparte:
+            if inst.get("tipo") == "escalera":
+                d |= {"fecha": inst["fecha"], "rend_anual": None, "perdida": None, "escenarios": None,
+                      "real_desde": None, "hoy": None,
+                      "escalera": [{"vence": f["vence"], "ticker": f["ticker"], "isin": f["isin"],
+                                    "bruto": f["ytm"], "neto": f["ytm"] - f["ter"]}
+                                   for f in sorted(inst["escalera"], key=lambda f: f["vence"])]}
+            elif k in aparte:
                 d |= {"real_desde": str(aparte[k].index[0]), "rend_anual": None, "perdida": None, "escenarios": None}
             else:
                 p = rec[k]

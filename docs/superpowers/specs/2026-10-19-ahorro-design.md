@@ -8,7 +8,9 @@ Mockup de referencia, con números inventados: [`docs/mockup/index.html`](../../
 Agustín pidió **sacar todo el tratamiento de la inflación** porque confundía a su hermana. Ahora hay dos vistas, **euros**
 y **dólares** (`?pais=eur|usd`; los links viejos `es`, `ea` y `us` siguen funcionando). Cada activo se convierte a la
 moneda de la vista y todo se muestra en términos nominales: rendimiento anual, "perdiste plata", escenarios y embudo.
-Ya no se bajan series de IPC. Donde este documento menciona la inflación, quedó desactualizado; manda este párrafo.
+Ya no se bajan series de IPC. En Mediano plazo, la tarjeta de IVOA pasó a ser una
+**tabla de iBonds € Corp con vencimiento de 2027 a 2032** (alternativa, no recomendada): muestra el rendimiento al
+vencimiento menos la comisión, con fecha, y explica cómo funcionan. Donde este documento menciona la inflación, quedó desactualizado; manda este párrafo.
 
 ## Intención
 

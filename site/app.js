@@ -74,6 +74,14 @@ function instrumento(g, inst, j) {
     <div class="row"><span class="tick">${esc(inst.detalle)}</span>${n === null ? "" : `<span class="sub">${etiqueta}</span>`}</div>
     ${principal ? `<div class="sub">Promedio de los últimos 10 años: ${pct(inst.rend_anual, true)}, más bajo porque entre 2016 y 2022 las tasas estuvieron en cero o negativas.</div>` : ""}
     ${!inst.sin_plazos && inst.real_desde && inst.real_desde > datos.desde ? `<div class="sub">Dato real del fondo desde ${esc(inst.real_desde.slice(0, 4))}; antes, ${esc(inst.antes)}.</div>` : ""}`;
+  if (inst.escalera) {
+    return `<div class="inst" style="cursor:default">${cabeza}
+      <div class="hoy">Funciona parecido a un plazo fijo: cada fondo tiene bonos de cientos de empresas que vencen el mismo año. En diciembre de ese año el fondo se cierra solo y te deposita la plata en la cuenta del broker. Si lo tenés hasta el final, sabés casi exacto cuánto te da. Elegí el año en que vas a necesitar la plata, o repartí entre dos o tres años.
+        <span class="nota">No tiene la garantía de depósitos de hasta 100.000 €, pero está repartido en cientos de empresas. Si lo vendés antes, cobrás el precio de ese día.</span></div>
+      <table class="chances escalera"><tr><th style="text-align:left">Vence en diciembre de</th><th>ETF</th><th>Rinde por año si lo tenés hasta el final</th></tr>
+        ${inst.escalera.map(f => `<tr><td style="text-align:left">${f.vence}</td><td>${esc(f.ticker)}</td><td><b>${pct(f.neto)}</b></td></tr>`).join("")}</table>
+      <div class="nota">Rendimiento al vencimiento de la ficha de iShares al ${esc(inst.fecha)}, ya descontada la comisión (0,12%). No está garantizado: si alguna empresa no paga, rinde menos.</div></div>`;
+  }
   if (inst.sin_plazos) {
     return `<div class="inst" style="cursor:default">${cabeza}${hoy(inst.hoy, inst)}
       <div class="nota">Es un bono con fecha de vencimiento: si lo tenés hasta ${esc(inst.vence)}, sabés casi exacto cuánto te da.</div></div>`;

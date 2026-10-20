@@ -7,6 +7,7 @@
 #   {tasa: eur|usd, ter, moneda_cotiza}                           fondo que replica la tasa overnight
 # ter_diff = TER del fondo - TER del proxy (negativo si el fondo es más barato).
 # "antes" es el texto que ve la persona sobre qué se usó antes del dato real del fondo.
+# tipo: escalera = ETFs con vencimiento fijo; no se bajan precios, se muestra el rendimiento al vencimiento por año.
 # "hoy.ytm" es el rendimiento al vencimiento de la ficha del emisor: se actualiza a mano (ver README).
 
 desde: "2000-01"
@@ -65,13 +66,18 @@ sets:
         salto_max: 0.15
         # Sin dato publicado para XZE5: se usa el de EUNT (bonos de empresas 1-5 años), su referencia más cercana.
         hoy: {ytm: 0.0396, fecha: "2026-10-16", fuente: "iShares € Corp Bond 1-5yr (EUNT)"}
-      - nombre: Bonos de empresas que vencen en 2028
-        detalle: IVOA · iShares iBonds Dec 2028 Term € Corp
-        yahoo: IVOA.DE
-        moneda_cotiza: EUR
-        sin_plazos: true
-        vence: "diciembre de 2028"
-        hoy: {ytm: 0.0369, fecha: "2026-10-16"}
+      - nombre: Bonos con fecha de vencimiento
+        detalle: iShares iBonds € Corp (acumulación) · elegí el año en que vas a necesitar la plata
+        tipo: escalera
+        # Rendimiento al vencimiento bruto de la ficha de iShares; se actualiza a mano (ver README).
+        fecha: "2026-10-19"
+        escalera:
+          - {vence: 2027, ticker: IB27, isin: IE000ZOI8OK5, ytm: 0.0334, ter: 0.0012}
+          - {vence: 2028, ticker: IVOA, isin: IE0008UEVOE0, ytm: 0.0373, ter: 0.0012}
+          - {vence: 2029, ticker: 29GA, isin: IE000SNLFDR7, ytm: 0.0387, ter: 0.0012}
+          - {vence: 2030, ticker: 30IA, isin: IE000Y2BJVK9, ytm: 0.0403, ter: 0.0012}
+          - {vence: 2031, ticker: IG31, isin: IE000D9WMGF0, ytm: 0.0420, ter: 0.0012}
+          - {vence: 2032, ticker: IG32, isin: IE000I660ZF8, ytm: 0.0426, ter: 0.0012}
       - nombre: Bonos de gobiernos euro, 1 a 3 años
         detalle: IBCA · iShares € Govt Bond 1-3yr
         yahoo: IBCA.DE

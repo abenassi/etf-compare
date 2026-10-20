@@ -24,8 +24,6 @@ def obtener_falso(nombre):
         return pd.Series(1.1, index=pd.period_range("1995-01", periods=380, freq="M"))
     if nombre.startswith("bbk:"):
         return pd.Series(3.0, index=pd.period_range("1995-01", periods=380, freq="M"))
-    if nombre == "yahoo:IVOA.DE":
-        return plano(30, "2023-09")
     return plano()
 
 
@@ -79,10 +77,14 @@ def test_build_falla_si_etf_tiene_un_mes_faltante(config):
         build.construir(config, con_hueco)
 
 
-def test_ivoa_sin_plazos(config):
-    ivoa = [i for i in instrumentos(build.construir(config, obtener_falso)["eur"]) if i.get("sin_plazos")]
-    assert ivoa and ivoa[0]["hoy"]["rinde"] == pytest.approx(0.0369)
-    assert ivoa[0]["perdida"] is None and ivoa[0]["escenarios"] is None
+def test_escalera_de_vencimientos(config):
+    esc = [i for i in instrumentos(build.construir(config, obtener_falso)["eur"]) if i.get("escalera")]
+    assert len(esc) == 1 and not esc[0]["destacado"]
+    filas = esc[0]["escalera"]
+    assert [f["vence"] for f in filas] == [2027, 2028, 2029, 2030, 2031, 2032]
+    ivoa = next(f for f in filas if f["ticker"] == "IVOA")
+    assert ivoa["neto"] == pytest.approx(0.0373 - 0.0012)
+    assert esc[0]["perdida"] is None and esc[0]["escenarios"] is None and esc[0]["fecha"] == "2026-10-19"
 
 
 def test_cuenta_remunerada_no_pierde_y_tiene_hoy(config):

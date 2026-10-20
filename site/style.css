@@ -61,3 +61,6 @@
   .aviso a, footer a { color: var(--text2); }
   footer h4 { font-size: 13px; color: var(--text2); margin: 16px 0 4px; }
   .inst .real span { font-size: 14px; }
+  table.escalera td { font-weight: 400; background: var(--surface); }
+  table.escalera td b { font-weight: 700; }
+  table.escalera th { font-size: 11px; }
