@@ -132,7 +132,38 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
             "grupos": grupos, "grafico": grafico}, []
 
 
-def construir(config: dict, obtener: Callable[[str], pd.Series]) -> dict[str, dict]:
+def _tickers_declarados(config: dict) -> dict[str, str]:
+    """Cada ticker de Yahoo de la configuración con la moneda en la que dice que cotiza."""
+    out = {}
+    for grupos in config["sets"].values():
+        for insts in grupos.values():
+            for i in insts:
+                if i.get("yahoo"):
+                    out[i["yahoo"]] = i["moneda_cotiza"]
+                for p in i.get("proxy") or []:
+                    if "yahoo" in p:
+                        out[p["yahoo"]] = p["moneda_cotiza"]
+                    for c in p.get("mezcla", []):
+                        out[c["yahoo"]] = p["moneda_cotiza"]
+    return out
+
+
+def chequear_monedas(config: dict, moneda_de: Callable[[str], str | None]) -> list[str]:
+    """Compara la moneda declarada con la que reporta la fuente. Si se declara mal, la conversión sale al revés."""
+    errores = []
+    for t, declarada in _tickers_declarados(config).items():
+        real = moneda_de(t)
+        if real and real.upper() != declarada:
+            errores.append(f"{t}: la configuración dice que cotiza en {declarada}, pero la fuente dice {real}")
+    return errores
+
+
+def construir(config: dict, obtener: Callable[[str], pd.Series],
+              moneda_de: Callable[[str], str | None] | None = None) -> dict[str, dict]:
+    if moneda_de:
+        errores_moneda = chequear_monedas(config, moneda_de)
+        if errores_moneda:
+            raise ValueError("Monedas mal declaradas, no se publica nada:\n" + "\n".join(errores_moneda))
     salida, errores = {}, []
     for clave in config["vistas"]:
         vista, e = _vista(clave, config, obtener)
@@ -162,7 +193,7 @@ def main() -> int:
     with open("config/instrumentos.yaml") as fh:
         config = yaml.safe_load(fh)
     try:
-        salida = construir(config, _obtener_real())
+        salida = construir(config, _obtener_real(), fuentes.moneda_yahoo)
     except ValueError as e:
         print(e, file=sys.stderr)
         return 1

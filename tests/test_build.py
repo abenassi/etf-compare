@@ -124,3 +124,33 @@ def test_grafico_liquidez_usa_el_fondo_monetario(config):
 def test_instrumento_con_proxy_dice_que_hay_antes(config):
     xze5 = instrumentos(build.construir(config, obtener_falso)["es"])[2]
     assert "alemán" in xze5["antes"]
+
+
+def test_activo_en_dolares_se_convierte_a_euros(config):
+    """Con el euro duplicándose contra el dólar, un activo en USD plano tiene que caer a la mitad medido en euros."""
+    def euro_fuerte(n):
+        if "EXR" in n:
+            idx = pd.period_range("1995-01", periods=380, freq="M")
+            return pd.Series([1.0 + i / 379 for i in range(380)], index=idx)  # de 1,0 a 2,0 USD por EUR
+        if n in ("yahoo:VTSMX", "yahoo:VGTSX", "yahoo:ACWI"):
+            return plano(r=0.0)
+        if n == "yahoo:VWCE.DE":
+            return plano(r=0.0).loc["2019-07":]
+        return obtener_falso(n)
+
+    es = build.construir(config, euro_fuerte)["es"]
+    vwce = instrumentos(es)[5]
+    assert vwce["nombre"] == "Acciones de todo el mundo"
+    assert vwce["perdida"]["10"] == 1.0  # antes de 2019 viene de proxies en USD: en euros siempre perdió
+
+
+def test_build_falla_si_la_moneda_declarada_no_coincide(config):
+    with pytest.raises(ValueError, match="CSPX.AS"):
+        build.construir(config, obtener_falso, moneda_de=lambda t: "USD")
+
+
+def test_build_acepta_monedas_correctas(config):
+    reales = {"CSPX.AS": "EUR", "CNDX.AS": "EUR"}
+    def moneda_de(t):
+        return reales.get(t, "EUR" if t.endswith(".DE") else "USD")
+    assert build.construir(config, obtener_falso, moneda_de=moneda_de)

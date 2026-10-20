@@ -31,6 +31,17 @@ def bajar_yahoo(ticker: str) -> pd.Series:
     return mensual(close, "ultimo")
 
 
+def moneda_yahoo(ticker: str) -> str | None:
+    """Moneda en la que Yahoo publica los precios del ticker. None si no se pudo consultar (no frena el build)."""
+    import yfinance as yf
+
+    try:
+        return yf.Ticker(ticker).fast_info["currency"]
+    except Exception as e:
+        print(f"AVISO: no pude consultar la moneda de {ticker}: {e}", file=sys.stderr)
+        return None
+
+
 def bajar_hicp(geo: str) -> pd.Series:
     url = ("https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/prc_hicp_minr"
            f"?geo={geo}&coicop18=TOTAL&unit=I15&format=JSON")

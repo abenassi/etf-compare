@@ -105,13 +105,13 @@ sets:
       - nombre: S&P 500 (EE.UU.)
         detalle: CSPX · iShares Core S&P 500
         yahoo: CSPX.AS
-        moneda_cotiza: USD
+        moneda_cotiza: EUR   # el fondo es en USD, pero Yahoo publica la línea de Ámsterdam en EUR
         proxy: [{yahoo: "^SP500TR", moneda_cotiza: USD, ter_diff: 0.0007}]
         salto_max: 0.35
       - nombre: Nasdaq 100 (tecnológicas, más riesgo)
         detalle: CNDX · iShares Nasdaq 100
         yahoo: CNDX.AS
-        moneda_cotiza: USD
+        moneda_cotiza: EUR   # el fondo es en USD, pero Yahoo publica la línea de Ámsterdam en EUR
         proxy: [{yahoo: QQQ, moneda_cotiza: USD, ter_diff: 0.001}]
         antes: QQQ, el ETF de EE.UU. que sigue el mismo índice
         salto_max: 0.35
