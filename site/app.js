@@ -54,8 +54,13 @@ function escenarios(inst, plazo, color, sc) {
   return fila("Peor", e.peor) + fila("Típico", e.tipico) + fila("Mejor", e.mejor);
 }
 
-// En Liquidez lo que importa es la tasa de hoy: pasa a ser el número grande y el promedio de 10 años queda de contexto.
-const hoyPrincipal = (g, inst) => g.id === "liq" && inst.hoy && inst.rend_anual !== null;
+// En Liquidez y Mediano plazo lo que importa es la tasa de hoy: pasa a ser el número grande y el promedio de 10 años
+// queda de contexto (es más bajo por los años de tasas en cero o negativas).
+const hoyPrincipal = (g, inst) => (g.id === "liq" || g.id === "med") && inst.hoy && inst.rend_anual !== null;
+const POR_QUE_PROMEDIO = {
+  liq: "más bajo porque entre 2016 y 2022 las tasas estuvieron en cero o negativas",
+  med: "más bajo porque entre 2016 y 2022 las tasas estuvieron en cero o negativas, y en 2022 los bonos cayeron cuando subieron",
+};
 
 function hoy(h, inst, principal = false) {
   if (!h) return "";
@@ -68,11 +73,12 @@ function hoy(h, inst, principal = false) {
 function instrumento(g, inst, j) {
   const principal = hoyPrincipal(g, inst);
   const n = principal ? inst.hoy.rinde : inst.rend_anual;
-  const etiqueta = principal ? "por año, con las tasas de hoy" : "promedio por año de los últimos 10 años";
+  const etiqueta = !principal ? "promedio por año de los últimos 10 años"
+    : g.id === "med" ? "por año con las tasas de hoy, ya descontada la comisión" : "por año, con las tasas de hoy";
   const cabeza = `<div class="row"><span class="name">${esc(inst.nombre)}${inst.destacado ? "<em>recomendado</em>" : ""}</span>
       ${n === null ? "" : `<span class="real ${n >= 0 ? "pos" : "neg"}">${pct(n, true)}</span>`}</div>
     <div class="row"><span class="tick">${esc(inst.detalle)}</span>${n === null ? "" : `<span class="sub">${etiqueta}</span>`}</div>
-    ${principal ? `<div class="sub">Promedio de los últimos 10 años: ${pct(inst.rend_anual, true)}, más bajo porque entre 2016 y 2022 las tasas estuvieron en cero o negativas.</div>` : ""}
+    ${principal ? `<div class="sub">Promedio de los últimos 10 años: ${pct(inst.rend_anual, true)}, ${POR_QUE_PROMEDIO[g.id]}.</div>` : ""}
     ${!inst.sin_plazos && inst.real_desde && inst.real_desde > datos.desde ? `<div class="sub">Dato real del fondo desde ${esc(inst.real_desde.slice(0, 4))}; antes, ${esc(inst.antes)}.</div>` : ""}`;
   if (inst.escalera) {
     return `<div class="inst" style="cursor:default">${cabeza}

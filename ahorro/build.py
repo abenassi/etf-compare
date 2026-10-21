@@ -52,7 +52,7 @@ def _hoy(inst: dict, tasa: pd.Series, cuenta_cfg: dict) -> dict | None:
     elif h and h.get("tasa"):
         rinde, fecha = tasa.iloc[-1] / 100 - h.get("ter", 0.0), str(tasa.index[-1])
     elif h and "ytm" in h:
-        rinde, fecha = h["ytm"], h["fecha"]
+        rinde, fecha = h["ytm"] - h.get("ter", 0.0), h["fecha"]  # neto de comisión, como la tabla de iBonds
     else:
         return None
     return {"rinde": rinde, "fecha": fecha, "fuente": (h or {}).get("fuente")}

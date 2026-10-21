@@ -8,6 +8,7 @@
 # ter_diff = TER del fondo - TER del proxy (negativo si el fondo es más barato).
 # "antes" es el texto que ve la persona sobre qué se usó antes del dato real del fondo.
 # tipo: escalera = ETFs con vencimiento fijo; no se bajan precios, se muestra el rendimiento al vencimiento por año.
+# "hoy.ter" se resta del ytm para mostrar el rendimiento neto de comisión.
 # "hoy.ytm" es el rendimiento al vencimiento de la ficha del emisor: se actualiza a mano (ver README).
 
 desde: "2000-01"
@@ -56,7 +57,7 @@ sets:
         antes: un fondo parecido (EUNT) y, antes de 2009, una aproximación con bonos del gobierno alemán a 2 años
         salto_max: 0.15
         # Sin dato publicado para XZE5: se usa el de EUNT (bonos de empresas 1-5 años), su referencia más cercana.
-        hoy: {ytm: 0.0396, fecha: "2026-10-16", fuente: "iShares € Corp Bond 1-5yr (EUNT)"}
+        hoy: {ytm: 0.0396, ter: 0.0016, fecha: "2026-10-16", fuente: "iShares € Corp Bond 1-5yr (EUNT)"}
       - nombre: Bonos con fecha de vencimiento
         detalle: iShares iBonds € Corp (acumulación) · elegí el año en que vas a necesitar la plata
         tipo: escalera
@@ -77,7 +78,7 @@ sets:
           - {bono: "bbk:BBSIS/M.I.ZST.ZI.EUR.S1311.B.A604.R02XX.R.A.A._Z._Z.A", duracion: 1.9, moneda_cotiza: EUR, ter_diff: 0.001}
         antes: una aproximación con bonos del gobierno alemán a 2 años
         salto_max: 0.15
-        hoy: {ytm: 0.0341, fecha: "2026-10-16"}
+        hoy: {ytm: 0.0341, ter: 0.001, fecha: "2026-10-16"}
     jub:
       - nombre: Acciones de todo el mundo
         detalle: VWCE · Vanguard FTSE All-World
@@ -135,7 +136,7 @@ sets:
         proxy: [{yahoo: VFSTX, moneda_cotiza: USD, ter_diff: -0.0017}]
         antes: el fondo de Vanguard de bonos de empresas de corto plazo (VFSTX)
         salto_max: 0.15
-        hoy: {ytm: 0.0546, fecha: "2026-10-15"}
+        hoy: {ytm: 0.0546, ter: 0.0003, fecha: "2026-10-15"}
       - nombre: Bonos de empresas 1-5 años
         detalle: IGSB · iShares 1-5 Year Investment Grade Corporate
         yahoo: IGSB

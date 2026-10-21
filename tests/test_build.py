@@ -168,3 +168,8 @@ def test_historia_liquidez_en_dolares_usa_el_fondo_monetario(config):
     h = build.construir(config, obtener_falso)["usd"]["historia"]
     liq = next(x for x in h["series"] if x["grupo"] == "liq")
     assert liq["valores"][-1] == pytest.approx(10000 * 1.003 ** (len(h["meses"]) - 1))  # BIL (plano)
+
+
+def test_hoy_de_bonos_descuenta_la_comision(config):
+    xze5 = instrumentos(build.construir(config, obtener_falso)["eur"])[1]
+    assert xze5["hoy"]["rinde"] == pytest.approx(0.0396 - 0.0016)
