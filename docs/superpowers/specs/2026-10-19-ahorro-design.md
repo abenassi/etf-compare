@@ -123,7 +123,7 @@ ser editar ese archivo y nada más.
 Mediano plazo y Jubilación muestran los mismos ETFs UCITS que la vista euro (un solo bloque en la configuración):
 los ETFs domiciliados en EE.UU. (VT, VOO, VCSH…) no tienen KID en español (PRIIPs) y los brokers europeos no se los
 venden a minoristas. La vista dólar solo reexpresa el rendimiento con el tipo de cambio mensual. Las tasas "hoy" de
-esos bonos son en euros: en la vista dólar van aclarando que en dólares se suma o
+esos bonos son en euros: en la vista dólar llevan la aclaración de que en dólares se suma o
 resta la variación del euro. Liquidez sí cambia por moneda: cuenta remunerada modelada con `TB3MS` menos 0,5 puntos
 (piso 0%) y `BIL` como alternativa.
 
