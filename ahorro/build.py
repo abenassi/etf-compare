@@ -45,7 +45,8 @@ def _serie_etf(inst: dict, moneda: str, fx: pd.Series, config: dict, obtener) ->
     return real
 
 
-def _hoy(inst: dict, tasa: pd.Series, cuenta_cfg: dict) -> dict | None:
+def _hoy(inst: dict, tasa: pd.Series, cuenta_cfg: dict, moneda: str) -> dict | None:
+    """Rendimiento de hoy y la moneda en la que vale: un ytm en euros no es el rendimiento en dólares."""
     h = inst.get("hoy")
     if inst.get("tipo") == "cuenta":
         rinde, fecha = max(tasa.iloc[-1] - cuenta_cfg["spread"], cuenta_cfg["piso"]) / 100, str(tasa.index[-1])
@@ -53,9 +54,10 @@ def _hoy(inst: dict, tasa: pd.Series, cuenta_cfg: dict) -> dict | None:
         rinde, fecha = tasa.iloc[-1] / 100 - h.get("ter", 0.0), str(tasa.index[-1])
     elif h and "ytm" in h:
         rinde, fecha = h["ytm"] - h.get("ter", 0.0), h["fecha"]  # neto de comisión, como la tabla de iBonds
+        moneda = inst["moneda_cotiza"]
     else:
         return None
-    return {"rinde": rinde, "fecha": fecha, "fuente": (h or {}).get("fuente")}
+    return {"rinde": rinde, "fecha": fecha, "fuente": (h or {}).get("fuente"), "moneda": moneda}
 
 
 def _publico(inst: dict) -> dict:
@@ -106,9 +108,9 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
         for j, inst in enumerate(set_[g["id"]]):
             k = f"{g['id']}:{j}"
             d = _publico(inst)
-            d["hoy"] = _hoy(inst, tasa, cuenta)
+            d["hoy"] = _hoy(inst, tasa, cuenta, moneda)
             if inst.get("tipo") == "escalera":
-                d |= {"fecha": inst["fecha"], "rend_anual": None, "perdida": None, "escenarios": None,
+                d |= {"fecha": inst["fecha"], "moneda": inst["moneda"], "rend_anual": None, "perdida": None, "escenarios": None,
                       "real_desde": None, "hoy": None,
                       "escalera": [{"vence": f["vence"], "ticker": f["ticker"], "isin": f["isin"],
                                     "bruto": f["ytm"], "neto": f["ytm"] - f["ter"]}

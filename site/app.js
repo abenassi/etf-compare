@@ -57,7 +57,10 @@ function escenarios(inst, plazo, color, sc) {
 
 // En Liquidez y Mediano plazo lo que importa es la tasa de hoy: pasa a ser el número grande y el promedio de 10 años
 // queda de contexto (es más bajo por los años de tasas en cero o negativas).
-const hoyPrincipal = (g, inst) => (g.id === "liq" || g.id === "med") && inst.hoy && inst.rend_anual !== null;
+// Si la tasa es de otra moneda (bonos en euros vistos en dólares) no sirve como número grande: queda abajo, aclarada.
+const hoyPrincipal = (g, inst) => (g.id === "liq" || g.id === "med") && inst.hoy && inst.rend_anual !== null
+  && inst.hoy.moneda === datos.moneda;
+const OTRA_MONEDA = "en euros. Medido en dólares, a eso se le suma o resta lo que suba o baje el euro contra el dólar";
 const POR_QUE_PROMEDIO = {
   liq: "más bajo porque entre 2016 y 2022 las tasas estuvieron en cero o negativas",
   med: "más bajo porque entre 2016 y 2022 las tasas estuvieron en cero o negativas, y en 2022 los bonos cayeron cuando subieron",
@@ -68,7 +71,8 @@ function hoy(h, inst, principal = false) {
   const que = inst.sin_plazos ? `Si lo tenés hasta ${esc(inst.vence)}, rinde` : "Con las tasas de hoy rinde";
   const fuente = h.fuente ? `Dato de referencia: ${esc(h.fuente)}, al ${esc(h.fecha)}.` : `Dato al ${esc(h.fecha)}.`;
   if (principal) return `<div class="hoy"><span class="nota" style="margin-top:0">${fuente}</span></div>`;
-  return `<div class="hoy">${que} <b>${pct(h.rinde)}</b> por año.<span class="nota">${fuente}</span></div>`;
+  const enOtra = h.moneda && h.moneda !== datos.moneda ? ` ${OTRA_MONEDA}` : "";
+  return `<div class="hoy">${que} <b>${pct(h.rinde)}</b> por año${enOtra}.<span class="nota">${fuente}</span></div>`;
 }
 
 function instrumento(g, inst, j) {
@@ -87,7 +91,7 @@ function instrumento(g, inst, j) {
         <span class="nota">No tiene la garantía de depósitos de hasta 100.000 €, pero está repartido en cientos de empresas. Si lo vendés antes, cobrás el precio de ese día.</span></div>
       <table class="chances escalera"><tr><th style="text-align:left">Vence en diciembre de</th><th>ETF</th><th>Rinde por año si lo tenés hasta el final</th></tr>
         ${inst.escalera.map(f => `<tr><td style="text-align:left">${f.vence}</td><td>${esc(f.ticker)}</td><td><b>${pct(f.neto)}</b></td></tr>`).join("")}</table>
-      <div class="nota">Rendimiento al vencimiento de la ficha de iShares al ${esc(inst.fecha)}, ya descontada la comisión (0,12%). No está garantizado: si alguna empresa no paga, rinde menos.</div></div>`;
+      <div class="nota">Rendimiento al vencimiento de la ficha de iShares al ${esc(inst.fecha)}, ya descontada la comisión (0,12%). No está garantizado: si alguna empresa no paga, rinde menos.${inst.moneda !== datos.moneda ? ` Los rendimientos son ${OTRA_MONEDA}.` : ""}</div></div>`;
   }
   if (inst.sin_plazos) {
     return `<div class="inst" style="cursor:default">${cabeza}${hoy(inst.hoy, inst)}
@@ -214,11 +218,13 @@ function grafico() {
 }
 
 function pie() {
-  const fiscal = datos.moneda === "EUR"
-    ? `<p><b>Impuestos en España:</b> los ETF no se traspasan sin tributar como los fondos indexados: cada venta paga impuesto (19 a 30%). Por eso elegí ETFs de acumulación, que difieren el impuesto hasta que vendés. Si tenés más de 50.000 € en un broker extranjero, mirá el Modelo 720.</p>`
+  const fiscal = `<p><b>Impuestos en España:</b> los ETF no se traspasan sin tributar como los fondos indexados: cada venta paga impuesto (19 a 30%). Por eso elegí ETFs de acumulación, que difieren el impuesto hasta que vendés. Si tenés más de 50.000 € en un broker extranjero, mirá el Modelo 720.</p>`;
+  const usd = datos.moneda === "USD"
+    ? `<p><b>Vista en dólares:</b> los fondos de mediano y largo plazo son los mismos que en euros, porque desde España solo se pueden comprar ETFs europeos (UCITS): los de EE.UU., como VOO o VT, no tienen el documento en español que exige la regulación europea y los brokers no los venden. Acá solo cambia la moneda en la que se mide el resultado, con el tipo de cambio de cada mes. La liquidez sí cambia: es plata que tenés en dólares.</p>`
     : "";
   document.getElementById("pie").innerHTML = `
     <p>Datos a ${mes(datos.datos_al)} · se actualiza cada mes · datos desde ${datos.desde.slice(0, 4)}. Rendimientos en ${datos.moneda === "EUR" ? "euros" : "dólares"}, ya descontadas las comisiones. Antes de que existiera cada fondo se usa el índice que replica o un fondo parecido; en los bonos en euros anteriores a 2009, una aproximación con la tasa del gobierno alemán a 2 años (Bundesbank). La cuenta remunerada es una aproximación: tasa de referencia menos 0,5 puntos, nunca negativa.</p>
+    ${usd}
     ${fiscal}
     <h4 id="aviso">Aviso legal</h4>
     <p>Esta página es un proyecto personal con fines exclusivamente informativos y educativos. No constituye asesoramiento financiero, de inversión, fiscal ni legal, ni una recomendación personalizada, ni una oferta o solicitud de compra o venta de ningún instrumento financiero. "Recomendado" indica solo la elección del autor para un caso genérico, sin conocer tu situación, tus objetivos ni tu tolerancia al riesgo.</p>

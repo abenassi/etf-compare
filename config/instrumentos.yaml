@@ -7,7 +7,7 @@
 #   {tasa: eur|usd, ter, moneda_cotiza}                           fondo que replica la tasa overnight
 # ter_diff = TER del fondo - TER del proxy (negativo si el fondo es más barato).
 # "antes" es el texto que ve la persona sobre qué se usó antes del dato real del fondo.
-# tipo: escalera = ETFs con vencimiento fijo; no se bajan precios, se muestra el rendimiento al vencimiento por año.
+# tipo: escalera = ETFs con vencimiento fijo (moneda = la de sus tasas); no se bajan precios, se muestra el rendimiento al vencimiento por año.
 # "hoy.ter" se resta del ytm para mostrar el rendimiento neto de comisión.
 # "hoy.ytm" es el rendimiento al vencimiento de la ficha del emisor: se actualiza a mano (ver README).
 
@@ -45,7 +45,7 @@ sets:
         detalle: Banco o broker (Trade Republic, MyInvestor…)
         tipo: cuenta
         destacado: true
-    med:
+    med: &med
       - nombre: Bonos de empresas, corto plazo
         detalle: XZE5 · Xtrackers EUR Corporate Bond Short Duration (0-5 años)
         destacado: true
@@ -61,6 +61,7 @@ sets:
       - nombre: Bonos con fecha de vencimiento
         detalle: iShares iBonds € Corp (acumulación) · elegí el año en que vas a necesitar la plata
         tipo: escalera
+        moneda: EUR
         # Rendimiento al vencimiento bruto de la ficha de iShares; se actualiza a mano (ver README).
         fecha: "2026-10-19"
         escalera:
@@ -79,7 +80,7 @@ sets:
         antes: una aproximación con bonos del gobierno alemán a 2 años
         salto_max: 0.15
         hoy: {ytm: 0.0341, ter: 0.001, fecha: "2026-10-16"}
-    jub:
+    jub: &jub
       - nombre: Acciones de todo el mundo
         detalle: VWCE · Vanguard FTSE All-World
         destacado: true
@@ -127,40 +128,7 @@ sets:
         antes: la tasa de las letras del Tesoro a 3 meses menos la comisión
         grafico: true
         hoy: {tasa: true, ter: 0.0014}
-    med:
-      - nombre: Bonos de empresas, corto plazo
-        detalle: VCSH · Vanguard Short-Term Corporate Bond
-        destacado: true
-        yahoo: VCSH
-        moneda_cotiza: USD
-        proxy: [{yahoo: VFSTX, moneda_cotiza: USD, ter_diff: -0.0017}]
-        antes: el fondo de Vanguard de bonos de empresas de corto plazo (VFSTX)
-        salto_max: 0.15
-        hoy: {ytm: 0.0546, ter: 0.0003, fecha: "2026-10-15"}
-      - nombre: Bonos de empresas 1-5 años
-        detalle: IGSB · iShares 1-5 Year Investment Grade Corporate
-        yahoo: IGSB
-        moneda_cotiza: USD
-        proxy: [{yahoo: VFSTX, moneda_cotiza: USD, ter_diff: -0.0016}]
-        antes: el fondo de Vanguard de bonos de empresas de corto plazo (VFSTX)
-        salto_max: 0.15
-    jub:
-      - nombre: Acciones de todo el mundo
-        detalle: VT · Vanguard Total World Stock
-        destacado: true
-        yahoo: VT
-        moneda_cotiza: USD
-        proxy: [{mezcla: [{yahoo: VTSMX, peso: 0.6}, {yahoo: VGTSX, peso: 0.4}], moneda_cotiza: USD, ter_diff: -0.0009}]
-        antes: fondos indexados de Vanguard (60% EE.UU., 40% resto del mundo)
-        salto_max: 0.35
-      - nombre: S&P 500 (EE.UU.)
-        detalle: VOO · Vanguard S&P 500
-        yahoo: VOO
-        moneda_cotiza: USD
-        proxy: [{yahoo: "^SP500TR", moneda_cotiza: USD, ter_diff: 0.0003}]
-        salto_max: 0.35
-      - nombre: Nasdaq 100 (tecnológicas, más riesgo)
-        detalle: QQQ · Invesco QQQ
-        yahoo: QQQ
-        moneda_cotiza: USD
-        salto_max: 0.35
+    # Mediano y largo plazo: los mismos ETFs UCITS que en euros. Desde España no se pueden comprar ETFs de EE.UU.
+    # (no tienen KID en español, PRIIPs), así que la vista en dólares solo reexpresa el rendimiento con el tipo de cambio.
+    med: *med
+    jub: *jub

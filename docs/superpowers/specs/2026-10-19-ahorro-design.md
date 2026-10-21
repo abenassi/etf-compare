@@ -118,12 +118,13 @@ rinde si lo tenés hasta el vencimiento, contra la inflación actual, y la fecha
 La lista vive en un archivo de configuración (`instrumentos.yaml` o similar), no en el código. Cambiar un ETF tiene que
 ser editar ese archivo y nada más.
 
-**Vista dólar (mi decisión):** usa ETFs listados en EE.UU., porque quien ahorra en dólares (residente en EE.UU., o un
-argentino con broker en EE.UU.) compra esos y no UCITS cubiertos a euro. Propuesta:
-- Liquidez: el destacado es la cuenta remunerada, modelada con la letra del Tesoro a 3 meses (FRED `TB3MS`) menos
-  0,5 puntos, con piso de 0%; la alternativa es `BIL` (desde 2007).
-- Mediano plazo: `VCSH` (destacado, desde 2009-11) e `IGSB`.
-- Jubilación: `VT` (destacado, desde 2008), `VOO` (completado con `^SP500TR`) y `QQQ`.
+**Vista dólar (decisión de Agustín, 2026-10-21):** la perspectiva es siempre la de alguien que invierte desde España.
+Mediano plazo y Jubilación muestran los mismos ETFs UCITS que la vista euro (un solo bloque en la configuración):
+los ETFs domiciliados en EE.UU. (VT, VOO, VCSH…) no tienen KID en español (PRIIPs) y los brokers europeos no se los
+venden a minoristas. La vista dólar solo reexpresa el rendimiento con el tipo de cambio mensual. Las tasas "hoy" de
+esos bonos son en euros: en la vista dólar no van como número grande, sino abajo, aclarando que en dólares se suma o
+resta la variación del euro. Liquidez sí cambia por moneda: cuenta remunerada modelada con `TB3MS` menos 0,5 puntos
+(piso 0%) y `BIL` como alternativa.
 
 El builder puede ajustar la lista verificando tamaño y comisión, siempre que todos tengan datos en el período común.
 

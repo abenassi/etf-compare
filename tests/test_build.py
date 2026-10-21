@@ -50,7 +50,7 @@ def test_json_no_menciona_inflacion(config):
 def test_build_recorta_al_ultimo_mes_comun(config):
     def corto(n):
         s = obtener_falso(n)
-        return s.iloc[:-3] if n == "yahoo:VT" else s
+        return s.iloc[:-3] if n == "yahoo:VWCE.DE" else s
 
     out = build.construir(config, corto)
     assert out["usd"]["datos_al"] == str(plano().index[-4])
@@ -71,9 +71,9 @@ def test_build_falla_si_serie_invalida(config):
 def test_build_falla_si_etf_tiene_un_mes_faltante(config):
     def con_hueco(n):
         s = obtener_falso(n)
-        return s.drop(s.index[-8]) if n == "yahoo:VT" else s
+        return s.drop(s.index[-8]) if n == "yahoo:VWCE.DE" else s
 
-    with pytest.raises(ValueError, match="VT"):
+    with pytest.raises(ValueError, match="VWCE"):
         build.construir(config, con_hueco)
 
 
@@ -92,7 +92,7 @@ def test_cuenta_remunerada_no_pierde_y_tiene_hoy(config):
     assert cuenta["nombre"] == "Cuenta remunerada"
     assert all(v == 0.0 for v in cuenta["perdida"].values())
     assert cuenta["hoy"]["rinde"] == pytest.approx(0.015)  # 2% - 0,5
-    assert set(cuenta["hoy"]) == {"rinde", "fecha", "fuente"}
+    assert set(cuenta["hoy"]) == {"rinde", "fecha", "fuente", "moneda"}
 
 
 def test_build_incluye_rendimiento_nominal(config):
@@ -173,3 +173,21 @@ def test_historia_liquidez_en_dolares_usa_el_fondo_monetario(config):
 def test_hoy_de_bonos_descuenta_la_comision(config):
     xze5 = instrumentos(build.construir(config, obtener_falso)["eur"])[1]
     assert xze5["hoy"]["rinde"] == pytest.approx(0.0396 - 0.0016)
+
+
+def test_mediano_y_largo_plazo_son_los_mismos_fondos_en_las_dos_monedas(config):
+    """Desde España se compran los mismos ETFs UCITS; la vista en dólares solo reexpresa el rendimiento."""
+    out = build.construir(config, obtener_falso)
+    for gid in ("med", "jub"):
+        def fondos(v):
+            return [(i["nombre"], i["ticker"]) for g in out[v]["grupos"] if g["id"] == gid for i in g["instrumentos"]]
+        assert fondos("eur") == fondos("usd")
+
+
+def test_hoy_dice_en_que_moneda_esta_la_tasa(config):
+    out = build.construir(config, obtener_falso)
+    xze5_usd = instrumentos(out["usd"])[2]
+    assert xze5_usd["ticker"] == "XZE5.DE" and xze5_usd["hoy"]["moneda"] == "EUR"
+    assert instrumentos(out["usd"])[0]["hoy"]["moneda"] == "USD"  # la cuenta en dólares
+    esc = next(i for i in instrumentos(out["usd"]) if i.get("escalera"))
+    assert esc["moneda"] == "EUR"
