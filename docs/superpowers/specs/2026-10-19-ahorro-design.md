@@ -78,7 +78,7 @@ De arriba a abajo:
    - **"¿Por qué el plazo importa?"**: embudo de 1 a 15 años para el destacado de mediano plazo y el de jubilación. La
      banda va del peor al mejor caso, la línea es el típico (en plata de hoy) y la raya marca lo que pusiste. Abajo va
      una tabla con en cuántos casos perdiste contra la inflación a 1, 3, 5, 10 y 15 años.
-   - **"10.000 invertidos en enero de 2000"**: la historia real desde el inicio de los datos. Marca la peor caída de las
+   - **"10.000 invertidos en enero de 2000"** (desde el 2026-10-21 va arriba de todo, con marcas y una tabla cada 5 años): la historia real desde el inicio de los datos. Marca la peor caída de las
      acciones y cuántos años tardaron en volver a lo que se puso. Reemplaza al gráfico de 10 años, que se describe abajo
      tal como era originalmente.
    Gráfico original: **"10.000€ en los últimos 10 años"**: una línea por grupo (su instrumento destacado), más la inflación en

@@ -11,7 +11,8 @@ let datos = null;
 
 const pct = (x, signo = false) =>
   (signo && x >= 0 ? "+" : "") + (x * 100).toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "%";
-const plata = v => Math.round(v).toLocaleString("es-ES") + " " + datos.simbolo;
+// "always": en español 4 cifras no llevan punto por defecto (7385); acá queremos 7.385 como el resto.
+const plata = v => Math.round(v).toLocaleString("es-ES", { useGrouping: "always" }) + " " + datos.simbolo;
 const mes = p => { const [a, m] = p.split("-"); return `${MESES[+m - 1]} de ${a}`; };
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
@@ -121,19 +122,21 @@ const leyenda = ids => ids.map(id => `<span><i style="background:${COLOR[id]}"><
 // Embudo: resultado de 10.000 según cuántos años los tuviste (peor, típico y mejor desde el inicio de los datos).
 function embudo() {
   const e = datos.embudo, P = e.plazos, n = P.length - 1;
+  const el = document.getElementById("embudo"), W = ancho(el);
+  el.setAttribute("viewBox", `0 0 ${W} 230`);
   const tope = Math.max(...e.series.flatMap(s => s.tipico)) * 1.5;
   const piso = Math.min(...e.series.flatMap(s => s.peor)) * 0.9;
-  const X = i => 34 + i / n * 286, Y = v => 205 - (Math.min(v, tope) - piso) / (tope - piso) * 195;
+  const X = i => 34 + i / n * (W - 54), Y = v => 205 - (Math.min(v, tope) - piso) / (tope - piso) * 195;
   const linea = (vals) => vals.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
   let svg = "";
   const paso = tope - piso > 20000 ? 10000 : 5000;
   for (let t = Math.ceil(piso / paso) * paso; t < tope; t += paso)
-    svg += `<line x1="34" x2="320" y1="${Y(t)}" y2="${Y(t)}" stroke="#e6e5e0"/><text x="0" y="${Y(t) + 3}" font-size="10" fill="${GRIS}">${k(t)}</text>`;
+    svg += `<line x1="34" x2="${W - 20}" y1="${Y(t)}" y2="${Y(t)}" stroke="#e6e5e0"/><text x="0" y="${Y(t) + 3}" font-size="10" fill="${GRIS}">${k(t)}</text>`;
   for (const s of e.series) {
     const banda = linea(s.mejor) + s.peor.map((v, i) => `L${X(n - i).toFixed(1)},${Y(s.peor[n - i]).toFixed(1)}`).join("") + "Z";
     svg += `<path d="${banda}" fill="${COLOR[s.grupo]}" fill-opacity="${s.grupo === "jub" ? 0.16 : 0.28}" stroke="none"/>`;
   }
-  svg += `<line x1="34" x2="320" y1="${Y(10000)}" y2="${Y(10000)}" stroke="#0b0b0b" stroke-width="1.2" stroke-dasharray="4 3"/>`;
+  svg += `<line x1="34" x2="${W - 20}" y1="${Y(10000)}" y2="${Y(10000)}" stroke="#0b0b0b" stroke-width="1.2" stroke-dasharray="4 3"/>`;
   svg += `<text x="36" y="${Y(10000) - 4}" font-size="10" fill="#0b0b0b">lo que pusiste</text>`;
   for (const s of e.series) svg += `<path d="${linea(s.tipico)}" fill="none" stroke="${COLOR[s.grupo]}" stroke-width="2.2"/>`;
   const jub = e.series.find(s => s.grupo === "jub");
@@ -144,7 +147,7 @@ function embudo() {
   }
   for (const i of [0, 4, 9, 14].filter(i => i <= n))
     svg += `<text x="${X(i)}" y="222" font-size="10" fill="${GRIS}" text-anchor="middle">${P[i]} ${P[i] === 1 ? "año" : "años"}</text>`;
-  document.getElementById("embudo").innerHTML = svg;
+  el.innerHTML = svg;
   document.getElementById("leyenda-embudo").innerHTML = leyenda(e.series.map(s => s.grupo)) +
     `<span>banda: de lo peor a lo mejor</span>`;
   const cols = [0, 2, 4, 9, 14].filter(i => i <= n);
@@ -154,25 +157,37 @@ function embudo() {
 }
 
 // Historia real desde el primer mes de datos.
+// Ancho real del gráfico en pantalla: así el texto no se agranda en pantallas anchas.
+const ancho = el => Math.max(320, Math.round(el.getBoundingClientRect().width) || 340);
+
 function grafico() {
   const gr = datos.historia, N = gr.meses.length - 1;
+  const el = document.getElementById("historia"), W = ancho(el);
+  el.setAttribute("viewBox", `0 0 ${W} 220`);
+  const R = W - 110; // borde derecho del área de líneas; a la derecha van las etiquetas
+  // Marcas cada 5 años (enero de 2000, 2005, ...) y el último mes.
+  const hitos = gr.meses.map((m, i) => [m, i]).filter(([m]) => m.endsWith("-01") && +m.slice(0, 4) % 5 === 0).map(([, i]) => i);
+  if (hitos[hitos.length - 1] !== N) hitos.push(N);
   const todas = gr.series.flatMap(s => s.valores);
   const lo = Math.min(...todas) * 0.92, hi = Math.max(...todas) * 1.04;
-  const X = i => 34 + i / N * 196, Y = v => 200 - (v - lo) / (hi - lo) * 185;
+  const X = i => 34 + i / N * (R - 34), Y = v => 200 - (v - lo) / (hi - lo) * 185;
   const camino = d => d.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
   let svg = "";
   const paso = hi - lo > 30000 ? 20000 : hi - lo > 15000 ? 10000 : 5000;
   for (let t = Math.ceil(lo / paso) * paso; t < hi; t += paso)
-    svg += `<line x1="34" x2="230" y1="${Y(t)}" y2="${Y(t)}" stroke="#e6e5e0"/><text x="0" y="${Y(t) + 3}" font-size="10" fill="${GRIS}">${k(t)}</text>`;
-  svg += `<line x1="34" x2="230" y1="${Y(10000)}" y2="${Y(10000)}" stroke="#0b0b0b" stroke-width="1" stroke-dasharray="2 3"/>`;
+    svg += `<line x1="34" x2="${R}" y1="${Y(t)}" y2="${Y(t)}" stroke="#e6e5e0"/><text x="0" y="${Y(t) + 3}" font-size="10" fill="${GRIS}">${k(t)}</text>`;
+  svg += `<line x1="34" x2="${R}" y1="${Y(10000)}" y2="${Y(10000)}" stroke="#0b0b0b" stroke-width="1" stroke-dasharray="2 3"/>`;
+  for (const i of hitos) svg += `<line x1="${X(i)}" x2="${X(i)}" y1="15" y2="200" stroke="#e6e5e0"/>`;
   for (const s of gr.series)
     svg += `<path d="${camino(s.valores)}" fill="none" stroke="${COLOR[s.grupo]}" stroke-width="1.8" stroke-linejoin="round"/>`;
+  for (const s of gr.series) for (const i of hitos)
+    svg += `<circle cx="${X(i)}" cy="${Y(s.valores[i])}" r="3.5" fill="${COLOR[s.grupo]}" stroke="#fff" stroke-width="1.5"><title>${esc(nombreGrupo(s.grupo))}, ${mes(gr.meses[i])}: ${plata(s.valores[i])}</title></circle>`;
   const finales = gr.series.map(s => ({ v: s.valores[N], t: nombreGrupo(s.grupo) }))
     .sort((a, b) => a.v - b.v);
   let prev = 999; // de abajo hacia arriba, separadas para que no se pisen
   for (const f of finales) {
     const y = Math.min(Y(f.v) + 3, prev - 12); prev = y;
-    svg += `<text x="235" y="${y}" font-size="10" fill="#0b0b0b"><tspan font-weight="700">${k(f.v)}</tspan> <tspan fill="#52514e">${esc(f.t)}</tspan></text>`;
+    svg += `<text x="${R + 5}" y="${y}" font-size="10" fill="#0b0b0b"><tspan font-weight="700">${k(f.v)}</tspan> <tspan fill="#52514e">${esc(f.t)}</tspan></text>`;
   }
   const jub = gr.series.find(s => s.grupo === "jub");
   if (jub) {
@@ -187,9 +202,13 @@ function grafico() {
         `La historia real, mes a mes. Quien puso 10.000 en acciones en enero de 2000 estuvo por debajo de lo que había puesto durante unos ${anios} años, hasta ${gr.meses[iVuelve].slice(0, 4)}. Después le ganó por lejos a todo lo demás.`;
     }
   }
-  for (const i of [0, Math.round(N / 2), N])
-    svg += `<text x="${X(i)}" y="216" font-size="10" fill="${GRIS}" text-anchor="${i === 0 ? "start" : i === N ? "end" : "middle"}">${gr.meses[i].slice(0, 4)}</text>`;
-  document.getElementById("historia").innerHTML = svg;
+  for (const i of hitos.filter((i, j) => j === 0 || X(i) - X(hitos[j - 1]) > 28))
+    svg += `<text x="${X(i)}" y="216" font-size="10" fill="${GRIS}" text-anchor="middle">${i === N && !gr.meses[i].endsWith("-01") ? "hoy" : gr.meses[i].slice(0, 4)}</text>`;
+  el.innerHTML = svg;
+  document.getElementById("hitos").innerHTML =
+    `<tr><th style="text-align:left">10.000 puestos en enero de 2000</th>${gr.series.map(s => `<th><i style="background:${COLOR[s.grupo]}"></i>${esc(nombreGrupo(s.grupo))}</th>`).join("")}</tr>` +
+    hitos.map(i => `<tr><td class="anio">${i === N ? mes(gr.meses[i]) : gr.meses[i].slice(0, 4)}</td>${gr.series.map(s =>
+      `<td style="color:${s.valores[i] < 10000 ? "var(--bad)" : "var(--text)"}">${plata(s.valores[i])}</td>`).join("")}</tr>`).join("");
   document.getElementById("leyenda").innerHTML = leyenda(gr.series.map(s => s.grupo));
   document.querySelectorAll(".sim").forEach(x => x.textContent = " " + datos.simbolo);
 }
@@ -238,6 +257,13 @@ document.getElementById("grupos").addEventListener("click", e => {
     return;
   }
   inst.classList.toggle("open");
+});
+
+// Los gráficos usan el ancho real: se redibujan si cambia (rotar el iPad, achicar la ventana).
+let redibujo;
+window.addEventListener("resize", () => {
+  clearTimeout(redibujo);
+  redibujo = setTimeout(() => { if (datos) { embudo(); grafico(); } }, 150);
 });
 
 cargar(vistaDeUrl());
