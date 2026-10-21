@@ -191,3 +191,8 @@ def test_hoy_dice_en_que_moneda_esta_la_tasa(config):
     assert instrumentos(out["usd"])[0]["hoy"]["moneda"] == "USD"  # la cuenta en dólares
     esc = next(i for i in instrumentos(out["usd"]) if i.get("escalera"))
     assert esc["moneda"] == "EUR"
+
+
+def test_build_incluye_rendimiento_de_5_anios(config):
+    xze5 = instrumentos(build.construir(config, obtener_falso)["eur"])[1]
+    assert xze5["rend_5"] == pytest.approx(1.003 ** 12 - 1)

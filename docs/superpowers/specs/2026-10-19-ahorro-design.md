@@ -91,7 +91,8 @@ De arriba a abajo:
    el 2026-10-19).
    El número grande se rotula "promedio por año de los últimos 10 años" y el bloque de hoy, "Con las tasas de hoy rinde".
    En Liquidez, el número grande es la tasa de hoy y el promedio de 10 años queda como contexto, porque incluye años de
-   tasas en cero o negativas (decidido por Agustín el 2026-10-20).
+   tasas en cero o negativas (decidido por Agustín el 2026-10-20). En Mediano plazo, el número grande es el promedio por
+   año de los últimos 5 años; debajo van el promedio de 10 años y la tasa de hoy (decidido por Agustín el 2026-10-21).
 
 Lo que Agustín sacó del mockup y no vuelve: el recuadro de "10.000€ en el colchón desde 2020" y el selector "¿cuándo vas a
 necesitar la plata?" que resaltaba un grupo.
@@ -122,7 +123,7 @@ ser editar ese archivo y nada más.
 Mediano plazo y Jubilación muestran los mismos ETFs UCITS que la vista euro (un solo bloque en la configuración):
 los ETFs domiciliados en EE.UU. (VT, VOO, VCSH…) no tienen KID en español (PRIIPs) y los brokers europeos no se los
 venden a minoristas. La vista dólar solo reexpresa el rendimiento con el tipo de cambio mensual. Las tasas "hoy" de
-esos bonos son en euros: en la vista dólar no van como número grande, sino abajo, aclarando que en dólares se suma o
+esos bonos son en euros: en la vista dólar van aclarando que en dólares se suma o
 resta la variación del euro. Liquidez sí cambia por moneda: cuenta remunerada modelada con `TB3MS` menos 0,5 puntos
 (piso 0%) y `BIL` como alternativa.
 

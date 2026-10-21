@@ -110,18 +110,19 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
             d = _publico(inst)
             d["hoy"] = _hoy(inst, tasa, cuenta, moneda)
             if inst.get("tipo") == "escalera":
-                d |= {"fecha": inst["fecha"], "moneda": inst["moneda"], "rend_anual": None, "perdida": None, "escenarios": None,
+                d |= {"fecha": inst["fecha"], "moneda": inst["moneda"], "rend_anual": None, "rend_5": None, "perdida": None, "escenarios": None,
                       "real_desde": None, "hoy": None,
                       "escalera": [{"vence": f["vence"], "ticker": f["ticker"], "isin": f["isin"],
                                     "bruto": f["ytm"], "neto": f["ytm"] - f["ter"]}
                                    for f in sorted(inst["escalera"], key=lambda f: f["vence"])]}
             elif k in aparte:
-                d |= {"real_desde": str(aparte[k].index[0]), "rend_anual": None, "perdida": None, "escenarios": None}
+                d |= {"real_desde": str(aparte[k].index[0]), "rend_anual": None, "rend_5": None, "perdida": None, "escenarios": None}
             else:
                 p = rec[k]
                 d |= {"real_desde": None if inst.get("tipo") == "cuenta" else
                       str(obtener(f"yahoo:{inst['yahoo']}").dropna().index[0]),
                       "rend_anual": metricas.rendimiento_nominal_anual(p),
+                      "rend_5": metricas.rendimiento_nominal_anual(p, meses=60),
                       "perdida": {str(a): metricas.pct_perdida(p, a) for a in PLAZOS},
                       "escenarios": {str(a): metricas.escenarios(p, a) for a in PLAZOS}}
                 en_grafico = inst.get("grafico") or (inst.get("destacado") and
