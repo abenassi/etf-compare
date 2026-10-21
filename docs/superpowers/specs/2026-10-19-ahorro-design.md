@@ -176,7 +176,7 @@ Proxies largos:
 - bonos en euros antes de 2009: un bono sintético armado con la tasa alemana a 2 años del Bundesbank;
 - monetarios: EONIA y T-bill.
 
-La línea de Liquidez del gráfico es el fondo monetario (XEON o BIL), no la cuenta modelada.
+La línea de Liquidez del gráfico es la cuenta modelada en euros (XEON se sacó el 2026-10-21 porque confundía) y BIL en dólares.
 
 - **Rendimiento por año sobre la inflación:** rendimiento anualizado de los últimos 10 años, ya deflactado por la inflación
   de la vista: `(1+nominal)/(1+inflación) − 1`, anualizado. Mi decisión: 10 años, para que coincida con el gráfico.

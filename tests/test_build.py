@@ -96,12 +96,12 @@ def test_cuenta_remunerada_no_pierde_y_tiene_hoy(config):
 
 
 def test_build_incluye_rendimiento_nominal(config):
-    vwce = instrumentos(build.construir(config, obtener_falso)["eur"])[5]
+    vwce = instrumentos(build.construir(config, obtener_falso)["eur"])[4]
     assert vwce["rend_anual"] == pytest.approx(1.003 ** 12 - 1)
 
 
 def test_instrumento_con_proxy_dice_que_hay_antes(config):
-    xze5 = instrumentos(build.construir(config, obtener_falso)["eur"])[2]
+    xze5 = instrumentos(build.construir(config, obtener_falso)["eur"])[1]
     assert "alemán" in xze5["antes"]
 
 
@@ -117,7 +117,7 @@ def test_activo_en_dolares_se_convierte_a_euros(config):
             return plano(r=0.0).loc["2019-07":]
         return obtener_falso(n)
 
-    vwce = instrumentos(build.construir(config, euro_fuerte)["eur"])[5]
+    vwce = instrumentos(build.construir(config, euro_fuerte)["eur"])[4]
     assert vwce["nombre"] == "Acciones de todo el mundo"
     assert vwce["perdida"]["10"] == 1.0  # antes de 2019 viene de proxies en USD: en euros siempre perdió
 
@@ -154,8 +154,17 @@ def test_build_historia_desde_el_inicio(config):
     assert all(len(s["valores"]) == len(h["meses"]) and s["valores"][0] == pytest.approx(10000) for s in h["series"])
 
 
-def test_historia_liquidez_usa_el_fondo_monetario(config):
-    h = build.construir(config, obtener_falso)["eur"]["historia"]
-    liq = next(x for x in h["series"] if x["grupo"] == "liq")
+def test_liquidez_en_euros_es_solo_la_cuenta(config):
+    out = build.construir(config, obtener_falso)["eur"]
+    liq = next(g for g in out["grupos"] if g["id"] == "liq")
+    assert [i["nombre"] for i in liq["instrumentos"]] == ["Cuenta remunerada"]
+    h = out["historia"]
+    serie = next(x for x in h["series"] if x["grupo"] == "liq")
     meses = len(h["meses"]) - 1
-    assert liq["valores"][-1] == pytest.approx(10000 * 1.003 ** meses)  # XEON (plano), no la cuenta al 1,5%
+    assert serie["valores"][-1] == pytest.approx(10000 * (1 + 0.015 / 12) ** meses)  # cuenta al 2% - 0,5
+
+
+def test_historia_liquidez_en_dolares_usa_el_fondo_monetario(config):
+    h = build.construir(config, obtener_falso)["usd"]["historia"]
+    liq = next(x for x in h["series"] if x["grupo"] == "liq")
+    assert liq["valores"][-1] == pytest.approx(10000 * 1.003 ** (len(h["meses"]) - 1))  # BIL (plano)

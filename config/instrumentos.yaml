@@ -44,15 +44,6 @@ sets:
         detalle: Banco o broker (Trade Republic, MyInvestor…)
         tipo: cuenta
         destacado: true
-      - nombre: Fondo monetario en euros
-        detalle: XEON · Xtrackers II EUR Overnight Rate Swap
-        yahoo: XEON.DE
-        moneda_cotiza: EUR
-        salto_max: 0.15
-        proxy: [{tasa: eur, ter: 0.001, moneda_cotiza: EUR}]
-        antes: la tasa del BCE (EONIA) menos la comisión
-        grafico: true
-        hoy: {tasa: true, ter: 0.001}
     med:
       - nombre: Bonos de empresas, corto plazo
         detalle: XZE5 · Xtrackers EUR Corporate Bond Short Duration (0-5 años)
