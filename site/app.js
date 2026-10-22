@@ -55,37 +55,48 @@ function escenarios(inst, plazo, color, sc) {
   return fila("Peor", e.peor) + fila("Típico", e.tipico) + fila("Mejor", e.mejor);
 }
 
-// En Liquidez lo que importa es la tasa de hoy: pasa a ser el número grande y el promedio de 10 años
-// queda de contexto (es más bajo por los años de tasas en cero o negativas).
-// Si la tasa es de otra moneda (bonos en euros vistos en dólares) no sirve como número grande: queda abajo, aclarada.
-const hoyPrincipal = (g, inst) => g.id === "liq" && inst.hoy && inst.rend_anual !== null
-  && inst.hoy.moneda === datos.moneda;
+// En Liquidez y en los bonos de Mediano plazo lo que importa es la tasa de hoy: pasa a ser el número grande y el
+// promedio pasado queda de contexto (es más bajo por los años de tasas en cero o negativas y la caída de 2022).
+// Si la tasa es en euros y la vista en dólares, se rotula "en euros" y se aclara qué pasa con el tipo de cambio.
+const hoyPrincipal = (g, inst) => (g.id === "liq" || g.id === "med") && inst.hoy && inst.rend_anual !== null;
 const OTRA_MONEDA = "en euros. Medido en dólares, a eso se le suma o resta lo que suba o baje el euro contra el dólar";
+const enOtraMoneda = m => m && m !== datos.moneda;
 const POR_QUE_PROMEDIO = {
-  liq: "más bajo porque entre 2016 y 2022 las tasas estuvieron en cero o negativas",
+  liq: { anios: 10, campo: "rend_anual", texto: "más bajo porque entre 2016 y 2022 las tasas estuvieron en cero o negativas" },
+  med: { anios: 5, campo: "rend_5", texto: "más bajo porque en 2022 los bonos cayeron cuando subieron las tasas, y antes las tasas estaban en cero" },
 };
 
 function hoy(h, inst, principal = false) {
   if (!h) return "";
   const que = inst.sin_plazos ? `Si lo tenés hasta ${esc(inst.vence)}, rinde` : "Con las tasas de hoy rinde";
   const fuente = h.fuente ? `Dato de referencia: ${esc(h.fuente)}, al ${esc(h.fecha)}.` : `Dato al ${esc(h.fecha)}.`;
-  if (principal) return `<div class="hoy"><span class="nota" style="margin-top:0">${fuente}</span></div>`;
-  const enOtra = h.moneda && h.moneda !== datos.moneda ? ` ${OTRA_MONEDA}` : "";
+  if (principal) {
+    const aclara = enOtraMoneda(h.moneda) ? `Es una tasa ${OTRA_MONEDA}. ` : "";
+    return `<div class="hoy"><span class="nota" style="margin-top:0">${aclara}${fuente}</span></div>`;
+  }
+  const enOtra = enOtraMoneda(h.moneda) ? ` ${OTRA_MONEDA}` : "";
   return `<div class="hoy">${que} <b>${pct(h.rinde)}</b> por año${enOtra}.<span class="nota">${fuente}</span></div>`;
 }
 
 function instrumento(g, inst, j) {
   const principal = hoyPrincipal(g, inst);
-  // Mediano plazo: el número grande es el promedio de los últimos 5 años (el plazo típico del grupo).
-  const cinco = g.id === "med" && inst.rend_5 != null;
-  const n = principal ? inst.hoy.rinde : cinco ? inst.rend_5 : inst.rend_anual;
-  const etiqueta = principal ? "por año, con las tasas de hoy"
-    : cinco ? "promedio por año de los últimos 5 años" : "promedio por año de los últimos 10 años";
+  const prom = POR_QUE_PROMEDIO[g.id];
+  const euros = principal && enOtraMoneda(inst.hoy.moneda) ? ", en euros" : "";
+  const n = principal ? inst.hoy.rinde : inst.rend_anual;
+  const etiqueta = !principal ? "promedio por año de los últimos 10 años"
+    : g.id === "med" ? `por año con las tasas de hoy, ya descontada la comisión${euros}` : "por año, con las tasas de hoy";
+  // Escalera: no hay un solo número; el grande es el rango de lo que rinde cada vencimiento.
+  const netos = inst.escalera ? inst.escalera.map(f => f.neto) : [];
+  const grande = inst.escalera ? `<span class="real pos">${pct(Math.min(...netos))} a ${pct(Math.max(...netos))}</span>`
+    : n === null ? "" : `<span class="real ${n >= 0 ? "pos" : "neg"}">${pct(n, true)}</span>`;
+  const rotulo = inst.escalera ? `por año si lo tenés hasta que vence, ya descontada la comisión${enOtraMoneda(inst.moneda) ? ", en euros" : ""}`
+    : n === null ? "" : etiqueta;
+  const grafica = !inst.destacado && g.id === "med" && datos.historia.serie_de?.med === inst.ticker;
   const cabeza = `<div class="row"><span class="name">${esc(inst.nombre)}${inst.destacado ? "<em>recomendado</em>" : ""}</span>
-      ${n === null ? "" : `<span class="real ${n >= 0 ? "pos" : "neg"}">${pct(n, true)}</span>`}</div>
-    <div class="row"><span class="tick">${esc(inst.detalle)}</span>${n === null ? "" : `<span class="sub">${etiqueta}</span>`}</div>
-    ${principal ? `<div class="sub">Promedio de los últimos 10 años: ${pct(inst.rend_anual, true)}, ${POR_QUE_PROMEDIO[g.id]}.</div>` : ""}
-    ${cinco ? `<div class="sub">Promedio de los últimos 10 años: ${pct(inst.rend_anual, true)}.</div>` : ""}
+      ${grande}</div>
+    <div class="row"><span class="tick">${esc(inst.detalle)}</span>${rotulo ? `<span class="sub">${rotulo}</span>` : ""}</div>
+    ${principal ? `<div class="sub">Promedio de los últimos ${prom.anios} años${datos.moneda === "USD" ? ", medido en dólares" : ""}: ${pct(inst[prom.campo], true)}, ${prom.texto}.</div>` : ""}
+    ${grafica ? `<div class="sub">No tiene fecha de vencimiento: sirve si no sabés cuándo vas a usar la plata. Es el que muestran los gráficos para Mediano plazo.</div>` : ""}
     ${!inst.sin_plazos && inst.real_desde && inst.real_desde > datos.desde ? `<div class="sub">Dato real del fondo desde ${esc(inst.real_desde.slice(0, 4))}; antes, ${esc(inst.antes)}.</div>` : ""}`;
   if (inst.escalera) {
     return `<div class="inst" style="cursor:default">${cabeza}
@@ -93,7 +104,7 @@ function instrumento(g, inst, j) {
         <span class="nota">No tiene la garantía de depósitos de hasta 100.000 €, pero está repartido en cientos de empresas. Si lo vendés antes, cobrás el precio de ese día.</span></div>
       <table class="chances escalera"><tr><th style="text-align:left">Vence en diciembre de</th><th>ETF</th><th>Rinde por año si lo tenés hasta el final</th></tr>
         ${inst.escalera.map(f => `<tr><td style="text-align:left">${f.vence}</td><td>${esc(f.ticker)}</td><td><b>${pct(f.neto)}</b></td></tr>`).join("")}</table>
-      <div class="nota">Rendimiento al vencimiento de la ficha de iShares al ${esc(inst.fecha)}, ya descontada la comisión (0,12%). No está garantizado: si alguna empresa no paga, rinde menos.${inst.moneda !== datos.moneda ? ` Los rendimientos son ${OTRA_MONEDA}.` : ""}</div></div>`;
+      <div class="nota">Rendimiento al vencimiento de la ficha de iShares al ${esc(inst.fecha)}, ya descontada la comisión (0,12%). No está garantizado: si alguna empresa no paga, rinde menos.${enOtraMoneda(inst.moneda) ? ` Los rendimientos son ${OTRA_MONEDA}.` : ""}</div></div>`;
   }
   if (inst.sin_plazos) {
     return `<div class="inst" style="cursor:default">${cabeza}${hoy(inst.hoy, inst)}
@@ -118,6 +129,7 @@ function grupos() {
       <h3>${esc(g.titulo)}</h3>
       <div class="para">${esc(g.para)}</div>
       ${g.instrumentos.map((x, j) => instrumento(g, x, j)).join("")}
+      ${g.id === "jub" ? `<div class="nota" style="margin-top:10px"><b>Solo para plata que no vas a tocar en 10 años o más.</b> Cuando falten unos 5 años para usarla, empezá a pasarla a bonos o a la cuenta, de a poco. <a href="#bajar">Cómo bajar el riesgo ↓</a></div>` : ""}
     </section>`).join("");
 }
 
@@ -160,6 +172,24 @@ function embudo() {
   document.getElementById("pierde").innerHTML =
     `<tr><th style="text-align:left">Perdiste plata…</th>${cols.map(i => `<th>${P[i]} ${P[i] === 1 ? "año" : "años"}</th>`).join("")}</tr>` +
     e.series.map(s => `<tr><th style="text-align:left">${esc(nombreGrupo(s.grupo))}</th>${cols.map(i => celda(s.pierde[i])).join("")}</tr>`).join("");
+  bajar();
+}
+
+// Cómo pasar de acciones a lo seguro cuando se acerca la fecha; los números salen del embudo de acciones.
+function bajar() {
+  const e = datos.embudo, jub = e.series.find(s => s.grupo === "jub");
+  const en = a => jub.pierde[e.plazos.indexOf(a)];
+  const nunca = e.plazos.find((a, i) => e.plazos.slice(i).every(b => jub.pierde[e.plazos.indexOf(b)] === 0));
+  const veces = p => `${p > 0 ? Math.max(1, Math.round(p * 100)) : 0}%`; // como la tabla: "0%" solo si nunca pasó
+  document.getElementById("bajar").innerHTML = `
+    <h3 style="margin:16px 0 4px">Cómo bajar el riesgo cuando se acerca la fecha</h3>
+    <p>Desde 2000, con acciones perdías plata el ${veces(en(5))} de las veces si las tenías 5 años${en(10) > 0 ? ` y el ${veces(en(10))} si las tenías 10` : ""}${nunca ? `; desde ${nunca} años, nunca` : ""}. El riesgo no es tenerlas: es tener que venderlas justo después de una caída.</p>
+    <ol>
+      <li><b>Acciones, solo para plata que no vas a tocar en 10 años o más.</b> Lo que vas a usar antes va a bonos o a la cuenta.</li>
+      <li><b>Cuando falten unos 5 años, pasá de a poco.</b> Por ejemplo, un 20% por año de acciones a bonos con vencimiento o a la cuenta, para llegar a la fecha con todo en lo seguro.</li>
+      <li><b>Si las acciones subieron mucho, asegurá antes.</b> Si ya llegaste a lo que necesitás, no hace falta esperar al calendario.</li>
+    </ol>
+    <p class="nota">Conviene decidir el plan ahora, con el mercado tranquilo: en medio de una caída es difícil no vender en el peor momento. Cada venta de un ETF paga impuesto sobre la ganancia.</p>`;
 }
 
 // Historia real desde el primer mes de datos.

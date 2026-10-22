@@ -46,21 +46,10 @@ sets:
         tipo: cuenta
         destacado: true
     med: &med
-      - nombre: Bonos de empresas, corto plazo
-        detalle: XZE5 · Xtrackers EUR Corporate Bond Short Duration (0-5 años)
-        destacado: true
-        yahoo: XZE5.DE
-        moneda_cotiza: EUR
-        proxy:
-          - {yahoo: EUNT.DE, moneda_cotiza: EUR, ter_diff: -0.0004}
-          - {bono: "bbk:BBSIS/M.I.ZST.ZI.EUR.S1311.B.A604.R02XX.R.A.A._Z._Z.A", duracion: 2.5, moneda_cotiza: EUR, ter_diff: 0.0016}
-        antes: un fondo parecido (EUNT) y, antes de 2009, una aproximación con bonos del gobierno alemán a 2 años
-        salto_max: 0.15
-        # Sin dato publicado para XZE5: se usa el de EUNT (bonos de empresas 1-5 años), su referencia más cercana.
-        hoy: {ytm: 0.0396, ter: 0.0016, fecha: "2026-10-16", fuente: "iShares € Corp Bond 1-5yr (EUNT)"}
       - nombre: Bonos con fecha de vencimiento
         detalle: iShares iBonds € Corp (acumulación) · elegí el año en que vas a necesitar la plata
         tipo: escalera
+        destacado: true
         moneda: EUR
         # Rendimiento al vencimiento bruto de la ficha de iShares; se actualiza a mano (ver README).
         fecha: "2026-10-19"
@@ -71,6 +60,18 @@ sets:
           - {vence: 2030, ticker: 30IA, isin: IE000Y2BJVK9, ytm: 0.0403, ter: 0.0012}
           - {vence: 2031, ticker: IG31, isin: IE000D9WMGF0, ytm: 0.0420, ter: 0.0012}
           - {vence: 2032, ticker: IG32, isin: IE000I660ZF8, ytm: 0.0426, ter: 0.0012}
+      - nombre: Bonos de empresas, corto plazo
+        detalle: XZE5 · Xtrackers EUR Corporate Bond Short Duration (0-5 años)
+        grafico: true   # la escalera no tiene historia de precios: en los gráficos, Mediano plazo es este fondo
+        yahoo: XZE5.DE
+        moneda_cotiza: EUR
+        proxy:
+          - {yahoo: EUNT.DE, moneda_cotiza: EUR, ter_diff: -0.0004}
+          - {bono: "bbk:BBSIS/M.I.ZST.ZI.EUR.S1311.B.A604.R02XX.R.A.A._Z._Z.A", duracion: 2.5, moneda_cotiza: EUR, ter_diff: 0.0016}
+        antes: un fondo parecido (EUNT) y, antes de 2009, una aproximación con bonos del gobierno alemán a 2 años
+        salto_max: 0.15
+        # Sin dato publicado para XZE5: se usa el de EUNT (bonos de empresas 1-5 años), su referencia más cercana.
+        hoy: {ytm: 0.0396, ter: 0.0016, fecha: "2026-10-16", fuente: "iShares € Corp Bond 1-5yr (EUNT)"}
       - nombre: Bonos de gobiernos euro, 1 a 3 años
         detalle: IBCA · iShares € Govt Bond 1-3yr
         yahoo: IBCA.DE

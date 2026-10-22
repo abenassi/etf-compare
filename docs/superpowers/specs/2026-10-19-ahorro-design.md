@@ -9,7 +9,9 @@ Agustín pidió **sacar todo el tratamiento de la inflación** porque confundía
 y **dólares** (`?pais=eur|usd`; los links viejos `es`, `ea` y `us` siguen funcionando). Cada activo se convierte a la
 moneda de la vista y todo se muestra en términos nominales: rendimiento anual, "perdiste plata", escenarios y embudo.
 Ya no se bajan series de IPC. En Mediano plazo, la tarjeta de IVOA pasó a ser una
-**tabla de iBonds € Corp con vencimiento de 2027 a 2032** (alternativa, no recomendada): muestra el rendimiento al
+**tabla de iBonds € Corp con vencimiento de 2027 a 2032** (desde el 2026-10-22 es la recomendada del grupo, con el rango
+de tasas como número grande; XZE5 queda de alternativa "si no sabés cuándo" y sigue siendo la serie de Mediano plazo
+en los gráficos): muestra el rendimiento al
 vencimiento menos la comisión, con fecha, y explica cómo funcionan. Donde este documento menciona la inflación, quedó desactualizado; manda este párrafo.
 
 ## Intención
@@ -91,8 +93,12 @@ De arriba a abajo:
    el 2026-10-19).
    El número grande se rotula "promedio por año de los últimos 10 años" y el bloque de hoy, "Con las tasas de hoy rinde".
    En Liquidez, el número grande es la tasa de hoy y el promedio de 10 años queda como contexto, porque incluye años de
-   tasas en cero o negativas (decidido por Agustín el 2026-10-20). En Mediano plazo, el número grande es el promedio por
-   año de los últimos 5 años; debajo van el promedio de 10 años y la tasa de hoy (decidido por Agustín el 2026-10-21).
+   tasas en cero o negativas (decidido por Agustín el 2026-10-20). En los bonos de Mediano plazo, el número grande es la
+   tasa de hoy, en las dos vistas (en dólares, rotulada "en euros"), y debajo el promedio de los últimos 5 años
+   (decidido por Agustín el 2026-10-22, después de probar el promedio de 5 años como número grande).
+   Bajar el riesgo (2026-10-22): una nota corta al pie de Jubilación y el bloque completo debajo del embudo, con tres
+   reglas (acciones solo a 10+ años; desde 5 años antes, pasar ~20% por año a lo seguro; asegurar antes si subió mucho) y
+   los porcentajes de pérdida a 5 y 10 años sacados del embudo de la vista.
 
 Lo que Agustín sacó del mockup y no vuelve: el recuadro de "10.000€ en el colchón desde 2020" y el selector "¿cuándo vas a
 necesitar la plata?" que resaltaba un grupo.

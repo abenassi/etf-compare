@@ -100,8 +100,8 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
 
     meses = next(iter(rec.values())).index
     total = len(meses) - 1
-    historia = {"meses": [str(m) for m in meses], "series": []}
-    embudo = {"plazos": list(PLAZOS_EMBUDO), "series": []}
+    historia = {"meses": [str(m) for m in meses], "series": [], "serie_de": {}}
+    embudo = {"plazos": list(PLAZOS_EMBUDO), "series": [], "serie_de": {}}
     grupos = []
     for g in config["grupos"]:
         out = []
@@ -129,7 +129,9 @@ def _vista(clave: str, config: dict, obtener) -> tuple[dict, list[str]]:
                                                      not any(i.get("grafico") for i in set_[g["id"]]))
                 if en_grafico:
                     historia["series"].append({"grupo": g["id"], "valores": metricas.crecimiento(p, meses=total)})
-                if inst.get("destacado") and g["id"] in ("med", "jub"):
+                    historia["serie_de"][g["id"]] = inst.get("yahoo") or inst["nombre"]
+                if en_grafico and g["id"] in ("med", "jub"):
+                    embudo["serie_de"][g["id"]] = inst["yahoo"]
                     esc = [metricas.escenarios(p, a) for a in PLAZOS_EMBUDO]
                     embudo["series"].append({"grupo": g["id"], **{c: [e[c] for e in esc] for c in ("peor", "tipico", "mejor")},
                                              "pierde": [metricas.pct_perdida(p, a) for a in PLAZOS_EMBUDO]})

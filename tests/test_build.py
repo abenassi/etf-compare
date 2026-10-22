@@ -31,6 +31,10 @@ def instrumentos(vista):
     return [i for g in vista["grupos"] for i in g["instrumentos"]]
 
 
+def por_ticker(vista, ticker):
+    return next(i for i in instrumentos(vista) if i["ticker"] == ticker)
+
+
 def test_build_produce_vistas_euro_y_dolar(config):
     out = build.construir(config, obtener_falso)
     assert set(out) == {"eur", "usd"}
@@ -79,7 +83,7 @@ def test_build_falla_si_etf_tiene_un_mes_faltante(config):
 
 def test_escalera_de_vencimientos(config):
     esc = [i for i in instrumentos(build.construir(config, obtener_falso)["eur"]) if i.get("escalera")]
-    assert len(esc) == 1 and not esc[0]["destacado"]
+    assert len(esc) == 1 and esc[0]["destacado"]
     filas = esc[0]["escalera"]
     assert [f["vence"] for f in filas] == [2027, 2028, 2029, 2030, 2031, 2032]
     ivoa = next(f for f in filas if f["ticker"] == "IVOA")
@@ -96,12 +100,12 @@ def test_cuenta_remunerada_no_pierde_y_tiene_hoy(config):
 
 
 def test_build_incluye_rendimiento_nominal(config):
-    vwce = instrumentos(build.construir(config, obtener_falso)["eur"])[4]
+    vwce = por_ticker(build.construir(config, obtener_falso)["eur"], "VWCE.DE")
     assert vwce["rend_anual"] == pytest.approx(1.003 ** 12 - 1)
 
 
 def test_instrumento_con_proxy_dice_que_hay_antes(config):
-    xze5 = instrumentos(build.construir(config, obtener_falso)["eur"])[1]
+    xze5 = por_ticker(build.construir(config, obtener_falso)["eur"], "XZE5.DE")
     assert "alemán" in xze5["antes"]
 
 
@@ -117,7 +121,7 @@ def test_activo_en_dolares_se_convierte_a_euros(config):
             return plano(r=0.0).loc["2019-07":]
         return obtener_falso(n)
 
-    vwce = instrumentos(build.construir(config, euro_fuerte)["eur"])[4]
+    vwce = por_ticker(build.construir(config, euro_fuerte)["eur"], "VWCE.DE")
     assert vwce["nombre"] == "Acciones de todo el mundo"
     assert vwce["perdida"]["10"] == 1.0  # antes de 2019 viene de proxies en USD: en euros siempre perdió
 
@@ -171,7 +175,7 @@ def test_historia_liquidez_en_dolares_usa_el_fondo_monetario(config):
 
 
 def test_hoy_de_bonos_descuenta_la_comision(config):
-    xze5 = instrumentos(build.construir(config, obtener_falso)["eur"])[1]
+    xze5 = por_ticker(build.construir(config, obtener_falso)["eur"], "XZE5.DE")
     assert xze5["hoy"]["rinde"] == pytest.approx(0.0396 - 0.0016)
 
 
@@ -186,7 +190,7 @@ def test_mediano_y_largo_plazo_son_los_mismos_fondos_en_las_dos_monedas(config):
 
 def test_hoy_dice_en_que_moneda_esta_la_tasa(config):
     out = build.construir(config, obtener_falso)
-    xze5_usd = instrumentos(out["usd"])[2]
+    xze5_usd = por_ticker(out["usd"], "XZE5.DE")
     assert xze5_usd["ticker"] == "XZE5.DE" and xze5_usd["hoy"]["moneda"] == "EUR"
     assert instrumentos(out["usd"])[0]["hoy"]["moneda"] == "USD"  # la cuenta en dólares
     esc = next(i for i in instrumentos(out["usd"]) if i.get("escalera"))
@@ -194,5 +198,15 @@ def test_hoy_dice_en_que_moneda_esta_la_tasa(config):
 
 
 def test_build_incluye_rendimiento_de_5_anios(config):
-    xze5 = instrumentos(build.construir(config, obtener_falso)["eur"])[1]
+    xze5 = por_ticker(build.construir(config, obtener_falso)["eur"], "XZE5.DE")
     assert xze5["rend_5"] == pytest.approx(1.003 ** 12 - 1)
+
+
+def test_mediano_plazo_recomienda_la_escalera_y_grafica_xze5(config):
+    """La escalera no tiene historia de precios: en los gráficos, Mediano plazo es XZE5."""
+    out = build.construir(config, obtener_falso)["eur"]
+    med = next(g for g in out["grupos"] if g["id"] == "med")["instrumentos"]
+    assert med[0].get("escalera") and med[0]["destacado"]
+    assert not por_ticker(out, "XZE5.DE")["destacado"]
+    assert out["embudo"]["serie_de"]["med"] == "XZE5.DE"
+    assert out["historia"]["serie_de"]["med"] == "XZE5.DE"
